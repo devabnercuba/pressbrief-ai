@@ -17,7 +17,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Radar — PressBrief AI" },
       {
         property: "og:description",
-        content: "Inteligência para fotógrafos esportivos profissionais.",
+        content: "Radar de oportunidades para fotógrafos esportivos: os melhores jogos para cobertura hoje.",
       },
     ],
   }),

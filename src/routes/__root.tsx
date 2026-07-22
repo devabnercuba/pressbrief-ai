@@ -78,19 +78,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "PressBrief AI — Inteligência para Fotógrafos Esportivos" },
+      { title: "Radar — PressBrief AI" },
       {
         name: "description",
         content:
-          "Plataforma de inteligência para fotógrafos esportivos profissionais. Descubra os melhores jogos para cobertura.",
+          "Radar de oportunidades para fotógrafos esportivos: os melhores jogos para cobertura hoje.",
       },
-      { property: "og:title", content: "PressBrief AI" },
+      { property: "og:title", content: "Radar — PressBrief AI" },
       {
         property: "og:description",
-        content: "Inteligência para Fotógrafos Esportivos.",
+        content: "Radar de oportunidades para fotógrafos esportivos: os melhores jogos para cobertura hoje.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Radar — PressBrief AI" },
+      { name: "twitter:description", content: "Radar de oportunidades para fotógrafos esportivos: os melhores jogos para cobertura hoje." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/10e577e1-0230-42a3-af87-0d2817d0152c/id-preview-fd54fe3c--650be313-f0fb-469b-ac8c-002fed52880f.lovable.app-1784726854535.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/10e577e1-0230-42a3-af87-0d2817d0152c/id-preview-fd54fe3c--650be313-f0fb-469b-ac8c-002fed52880f.lovable.app-1784726854535.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
