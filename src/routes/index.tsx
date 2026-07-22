@@ -1,24 +1,44 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Layout } from "@/components/app/Layout";
+import { Header } from "@/components/app/Header";
+import { FilterBar } from "@/components/app/FilterBar";
+import { GameCard } from "@/components/app/GameCard";
+import { mockGames } from "@/lib/mock-games";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Radar — PressBrief AI" },
+      {
+        name: "description",
+        content:
+          "Radar de oportunidades para fotógrafos esportivos: os melhores jogos para cobertura hoje.",
+      },
+      { property: "og:title", content: "Radar — PressBrief AI" },
+      {
+        property: "og:description",
+        content: "Inteligência para fotógrafos esportivos profissionais.",
+      },
+    ],
+  }),
+  component: RadarPage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function RadarPage() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
+    <Layout>
+      <Header
+        title="Radar de Oportunidades"
+        subtitle="Os melhores jogos para cobertura hoje."
       />
-    </div>
+      <div className="mt-6">
+        <FilterBar />
+      </div>
+      <section className="mt-6 space-y-4">
+        {mockGames.map((g) => (
+          <GameCard key={g.id} game={g} />
+        ))}
+      </section>
+    </Layout>
   );
 }
