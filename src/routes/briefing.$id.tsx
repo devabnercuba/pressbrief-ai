@@ -73,7 +73,7 @@ function BriefingPage() {
               Por que este jogo?
             </h2>
             <ul className="mt-3 space-y-2.5">
-              {game.reasons.map((r) => (
+              {game.reasons.map((r: string) => (
                 <li key={r} className="flex gap-3 text-sm text-foreground/90">
                   <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                   {r}
