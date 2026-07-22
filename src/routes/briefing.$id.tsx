@@ -4,7 +4,7 @@ import { Layout } from "@/components/app/Layout";
 import { Header } from "@/components/app/Header";
 import { ScoreBadge, CoverageScore } from "@/components/app/ScoreBadge";
 import { Button } from "@/components/ui/button";
-import { getGameById } from "@/lib/mock-games";
+import { getGameById, type Game } from "@/lib/mock-games";
 
 export const Route = createFileRoute("/briefing/$id")({
   head: () => ({
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/briefing/$id")({
       { property: "og:description", content: "Dossiê editorial para cobertura fotográfica." },
     ],
   }),
-  loader: ({ params }) => {
+  loader: ({ params }): { game: Game } => {
     const game = getGameById(params.id);
     if (!game) throw notFound();
     return { game };
