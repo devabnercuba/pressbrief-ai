@@ -74,7 +74,7 @@ function BriefingPage() {
           icon={<FileText className="h-4 w-4" />}
         >
           <ul className="grid gap-3 sm:grid-cols-2">
-            {game.pautas.map((p) => (
+            {game.pautas.map((p: Game["pautas"][number]) => (
               <li key={p.id} className="rounded-lg border border-border bg-background/40 p-4">
                 <div className="flex items-start gap-3">
                   <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
@@ -96,7 +96,7 @@ function BriefingPage() {
           icon={<Star className="h-4 w-4" />}
         >
           <div className="grid gap-3 md:grid-cols-2">
-            {game.priorityPlayers.map((p) => (
+            {game.priorityPlayers.map((p: Game["priorityPlayers"][number]) => (
               <PlayerPriorityCard key={p.id} player={p} />
             ))}
           </div>
@@ -110,7 +110,7 @@ function BriefingPage() {
           icon={<AlertTriangle className="h-4 w-4" />}
         >
           <ul className="grid gap-2 sm:grid-cols-2">
-            {game.mustShoot.map((item, i) => (
+            {game.mustShoot.map((item: string, i: number) => (
               <li key={item} className="flex gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
                 <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-destructive/15 text-[11px] font-semibold text-destructive">
                   {i + 1}
@@ -137,7 +137,7 @@ function BriefingPage() {
           }
         >
           <ul className="space-y-2">
-            {game.checklist.map((item) => {
+            {game.checklist.map((item: Game["checklist"][number]) => {
               const done = checked.has(item.id);
               return (
                 <li key={item.id}>
