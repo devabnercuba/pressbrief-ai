@@ -1,18 +1,24 @@
+import { useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, Calendar, Clock, MapPin, Trophy } from "lucide-react";
+import { ArrowLeft, FileText, Star, AlertTriangle, ListChecks, Check, LayoutGrid, Camera } from "lucide-react";
 import { Layout } from "@/components/app/Layout";
 import { Header } from "@/components/app/Header";
-import { ScoreBadge, CoverageScore } from "@/components/app/ScoreBadge";
 import { Button } from "@/components/ui/button";
+import { CoverageScore, EditorialScore } from "@/components/app/CoverageScore";
+import { GameSummary } from "@/components/app/GameSummary";
+import { BriefingSection } from "@/components/app/BriefingSection";
+import { PlayerPriorityCard } from "@/components/app/PlayerPriorityCard";
+import { ShotList } from "@/components/app/ShotList";
+import { cn } from "@/lib/utils";
 import { getGameById, type Game } from "@/lib/mock-games";
 
 export const Route = createFileRoute("/briefing/$id")({
   head: () => ({
     meta: [
       { title: "Briefing — PressBrief AI" },
-      { name: "description", content: "Briefing completo do jogo selecionado." },
+      { name: "description", content: "Briefing profissional de preparação para cobertura fotográfica esportiva." },
       { property: "og:title", content: "Briefing — PressBrief AI" },
-      { property: "og:description", content: "Dossiê editorial para cobertura fotográfica." },
+      { property: "og:description", content: "Resumo, pautas, jogadores prioritários, shot list e checklist." },
     ],
   }),
   loader: ({ params }): { game: Game } => {
@@ -25,153 +31,157 @@ export const Route = createFileRoute("/briefing/$id")({
 
 function BriefingPage() {
   const { game } = Route.useLoaderData();
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const toggle = (id: string) =>
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const progress = Math.round((checked.size / game.checklist.length) * 100);
 
   return (
     <Layout>
       <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground">
         <Link to="/">
-          <ArrowLeft className="mr-1 h-4 w-4" /> Voltar ao Radar
+          <ArrowLeft className="mr-1 h-4 w-4" /> Voltar ao Dashboard
         </Link>
       </Button>
 
       <Header
         title={`${game.homeTeam} vs ${game.awayTeam}`}
         subtitle={`${game.competition} • ${game.stadium}, ${game.city}`}
-        actions={<CoverageScore score={game.coverageScore} />}
+        actions={
+          <div className="flex items-center gap-4">
+            <CoverageScore score={game.coverageScore} size="md" label="Coverage" />
+            <EditorialScore score={game.editorialScore} size="md" label="Editorial" />
+          </div>
+        }
       />
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <section className="lg:col-span-2 space-y-6">
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex items-center justify-between gap-6">
-              <TeamBlock name={game.homeTeam} crest={game.homeCrest} />
-              <span className="text-sm font-medium text-muted-foreground">vs</span>
-              <TeamBlock name={game.awayTeam} crest={game.awayCrest} align="right" />
-            </div>
-            <div className="mt-6 grid grid-cols-2 gap-4 border-t border-border pt-6 sm:grid-cols-4">
-              <Meta icon={Calendar} label="Data" value={game.date} />
-              <Meta icon={Clock} label="Horário" value={game.time} />
-              <Meta icon={MapPin} label="Estádio" value={game.stadium} />
-              <Meta icon={Trophy} label="Competição" value={game.competition} />
-            </div>
-          </div>
+      <div className="mt-6 space-y-5">
+        {/* 1 — Resumo da partida */}
+        <BriefingSection step={1} title="Resumo da partida" subtitle="Contexto e narrativa principal">
+          <GameSummary game={game} />
+        </BriefingSection>
 
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Análise Editorial
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-foreground/90">
-              Este confronto reúne fatores de alta demanda editorial, com destaque para narrativas
-              de rivalidade histórica, jogadores em momento de valorização de mercado e condições
-              técnicas favoráveis para captura fotográfica. Recomenda-se chegada com 3h de
-              antecedência para posicionamento em zonas privilegiadas.
-            </p>
-          </div>
+        {/* 2 — Principais pautas */}
+        <BriefingSection
+          step={2}
+          title="Principais pautas"
+          subtitle={`${game.pautas.length} narrativas mapeadas`}
+          icon={<FileText className="h-4 w-4" />}
+        >
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {game.pautas.map((p: Game["pautas"][number]) => (
+              <li key={p.id} className="rounded-lg border border-border bg-background/40 p-4">
+                <div className="flex items-start gap-3">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{p.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{p.description}</p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </BriefingSection>
 
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Por que este jogo?
-            </h2>
-            <ul className="mt-3 space-y-2.5">
-              {game.reasons.map((r: string) => (
-                <li key={r} className="flex gap-3 text-sm text-foreground/90">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                  {r}
+        {/* 3 — Jogadores prioritários */}
+        <BriefingSection
+          step={3}
+          title="Jogadores prioritários"
+          subtitle={`${game.priorityPlayers.length} atletas com alta demanda editorial`}
+          icon={<Star className="h-4 w-4" />}
+        >
+          <div className="grid gap-3 md:grid-cols-2">
+            {game.priorityPlayers.map((p: Game["priorityPlayers"][number]) => (
+              <PlayerPriorityCard key={p.id} player={p} />
+            ))}
+          </div>
+        </BriefingSection>
+
+        {/* 4 — Não pode deixar de fotografar */}
+        <BriefingSection
+          step={4}
+          title="O que você NÃO pode deixar de fotografar"
+          subtitle="Momentos obrigatórios da cobertura"
+          icon={<AlertTriangle className="h-4 w-4" />}
+        >
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {game.mustShoot.map((item: string, i: number) => (
+              <li key={item} className="flex gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-destructive/15 text-[11px] font-semibold text-destructive">
+                  {i + 1}
+                </span>
+                <p className="text-sm text-foreground/90">{item}</p>
+              </li>
+            ))}
+          </ul>
+        </BriefingSection>
+
+        {/* 5 — Checklist de cobertura */}
+        <BriefingSection
+          step={5}
+          title="Checklist de cobertura"
+          subtitle="Prepare-se antes, durante e depois do jogo"
+          icon={<ListChecks className="h-4 w-4" />}
+          actions={
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="tabular-nums">{checked.size}/{game.checklist.length}</span>
+              <div className="h-1.5 w-24 overflow-hidden rounded-full bg-border/60">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+          }
+        >
+          <ul className="space-y-2">
+            {game.checklist.map((item: Game["checklist"][number]) => {
+              const done = checked.has(item.id);
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => toggle(item.id)}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-lg border border-border bg-background/40 p-3 text-left transition-colors hover:border-border/80",
+                      done && "opacity-60",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "grid h-5 w-5 shrink-0 place-items-center rounded border transition-colors",
+                        done ? "border-success bg-success text-success-foreground" : "border-border bg-card",
+                      )}
+                    >
+                      {done && <Check className="h-3 w-3" />}
+                    </span>
+                    <span className={cn("text-sm text-foreground", done && "line-through")}>{item.label}</span>
+                  </button>
                 </li>
-              ))}
-            </ul>
-          </div>
-        </section>
+              );
+            })}
+          </ul>
 
-        <aside className="space-y-6">
-          <div className="rounded-xl border border-border bg-card p-6">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Nível de oportunidade
-            </p>
-            <div className="mt-3">
-              <ScoreBadge opportunity={game.opportunity} />
+          {/* Shot list */}
+          <div className="mt-6 rounded-lg border border-border/60 bg-background/30 p-4">
+            <div className="mb-3 flex items-center gap-2 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+              <Camera className="h-3 w-3 text-primary" />
+              Shot list sugerido
             </div>
-            <div className="mt-6 space-y-3 text-sm">
-              <Stat label="Demanda de agências" value="Alta" tone="success" />
-              <Stat label="Concorrência local" value="Média" tone="warning" />
-              <Stat label="Iluminação prevista" value="Ótima" tone="success" />
-              <Stat label="Credenciamento" value="Aberto" tone="success" />
-            </div>
+            <ShotList shots={game.shotList} />
           </div>
+        </BriefingSection>
+      </div>
 
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="text-sm font-semibold text-foreground">Logística</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Estimativa de deslocamento e infraestrutura serão calculadas quando o módulo de
-              geolocalização estiver ativo.
-            </p>
-          </div>
-        </aside>
+      <div className="mt-6 flex justify-end">
+        <Button asChild variant="outline" size="sm">
+          <Link to="/">
+            <LayoutGrid className="mr-1.5 h-4 w-4" /> Voltar ao Dashboard
+          </Link>
+        </Button>
       </div>
     </Layout>
-  );
-}
-
-function TeamBlock({
-  name,
-  crest,
-  align = "left",
-}: {
-  name: string;
-  crest: string;
-  align?: "left" | "right";
-}) {
-  return (
-    <div className={`flex items-center gap-3 ${align === "right" ? "flex-row-reverse" : ""}`}>
-      <img src={crest} alt={name} className="h-16 w-16 rounded-xl" />
-      <div className={align === "right" ? "text-right" : ""}>
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">
-          {align === "right" ? "Visitante" : "Mandante"}
-        </p>
-        <p className="text-lg font-semibold text-foreground">{name}</p>
-      </div>
-    </div>
-  );
-}
-
-function Meta({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div>
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Icon className="h-3.5 w-3.5" />
-        {label}
-      </div>
-      <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone: "success" | "warning" | "destructive";
-}) {
-  const toneMap = {
-    success: "text-success",
-    warning: "text-warning",
-    destructive: "text-destructive",
-  } as const;
-  return (
-    <div className="flex items-center justify-between border-b border-border/60 pb-2 last:border-0 last:pb-0">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={`font-medium ${toneMap[tone]}`}>{value}</span>
-    </div>
   );
 }
