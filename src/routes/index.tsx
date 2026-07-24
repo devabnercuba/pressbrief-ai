@@ -113,7 +113,7 @@ function DashboardPage() {
               Nenhuma partida disponível no momento.
             </p>
           )}
-          {matchesQuery.isSuccess && recommended.map((g) => <RecommendedCard key={g.id} game={g} />)}
+          {matchesQuery.isSuccess && recommended.map((r) => <RecommendedCard key={r.game.id} game={r.game} />)}
         </div>
       </section>
 
