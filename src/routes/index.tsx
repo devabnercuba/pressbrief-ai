@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { listPendingCredentials, getDaySummary, getUserProfile } from "@/services/gameService";
 import { listMatches } from "@/services/footballDataService";
+import { analyzeCoverageFromGame } from "@/intelligence";
 import type { Game } from "@/types";
 
 
@@ -214,6 +215,16 @@ function SectionHeader({ title, subtitle, icon }: { title: string; subtitle: str
 }
 
 function RecommendedCard({ game }: { game: Game }) {
+  const coverage = analyzeCoverageFromGame(game);
+  const topReason = coverage.positives[0];
+  const ratingTone =
+    coverage.rating === "Excelente"
+      ? "text-success border-success/30 bg-success/10"
+      : coverage.rating === "Bom"
+        ? "text-primary border-primary/30 bg-primary/10"
+        : coverage.rating === "Regular"
+          ? "text-warning border-warning/30 bg-warning/10"
+          : "text-muted-foreground border-border bg-muted/30";
   return (
     <Link
       to="/briefing/$id"
@@ -226,14 +237,20 @@ function RecommendedCard({ game }: { game: Game }) {
             <img src={game.homeCrest} alt="" className="h-9 w-9 rounded-md ring-2 ring-card" />
             <img src={game.awayCrest} alt="" className="h-9 w-9 rounded-md ring-2 ring-card" />
           </div>
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            {game.weather.condition}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider", ratingTone)}>
+              {coverage.rating}
+            </span>
+            <span className="text-xs font-semibold tabular-nums text-foreground">{coverage.coverageScore}</span>
+          </div>
         </div>
         <h3 className="mt-3 text-sm font-semibold text-foreground">
           {game.homeTeam} vs {game.awayTeam}
         </h3>
         <p className="mt-0.5 text-xs text-muted-foreground">{game.competition}</p>
+        {topReason && (
+          <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{topReason}</p>
+        )}
       </div>
       <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
         <span>{game.stadium}</span>
