@@ -91,6 +91,50 @@ function DashboardPage() {
         </div>
       </header>
 
+      {/* Best coverage of the day */}
+      {matchesQuery.isSuccess && bestOfDay && (
+        <section className="mt-8">
+          <SectionHeader
+            title="Melhor cobertura do dia"
+            subtitle="Combinação de Editorial e Coverage Score"
+            icon={<Trophy className="h-4 w-4" />}
+          />
+          <div className="mt-4">
+            <BestCoverageCard
+              game={bestOfDay.game}
+              coverage={bestOfDay.coverage}
+              editorial={bestOfDay.editorial}
+              recommendation={bestOfDay.recommendation}
+            />
+          </div>
+        </section>
+      )}
+
+      {/* Ranking de coberturas */}
+      {matchesQuery.isSuccess && ranked.length > 0 && (
+        <section className="mt-8">
+          <SectionHeader
+            title="Ranking de coberturas"
+            subtitle="Partidas ordenadas pela recomendação calculada"
+            icon={<ListOrdered className="h-4 w-4" />}
+          />
+          <div className="mt-4 rounded-xl border border-border bg-card">
+            <ul className="divide-y divide-border/60">
+              {ranked.slice(0, 10).map((r, idx) => (
+                <RankingRow
+                  key={r.game.id}
+                  index={idx + 1}
+                  game={r.game}
+                  coverage={r.coverage}
+                  editorial={r.editorial}
+                  recommendation={r.recommendation}
+                />
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
+
       {/* Recommended games */}
       <section className="mt-8">
         <SectionHeader
