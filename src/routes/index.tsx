@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Sunrise, Sparkles, TicketCheck, FileText, ArrowUpRight, Radar as RadarIcon, Clock } from "lucide-react";
+import { Sunrise, Sparkles, TicketCheck, FileText, ArrowUpRight, Radar as RadarIcon, Clock, Trophy, Star, ListOrdered } from "lucide-react";
 import { Layout } from "@/components/app/Layout";
 import { FilterBar } from "@/components/app/FilterBar";
 import { GameCard } from "@/components/app/GameCard";
@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { listPendingCredentials, getDaySummary, getUserProfile } from "@/services/gameService";
 import { listMatches } from "@/services/footballDataService";
-import { analyzeCoverageFromGame, analyzeEditorialFromGame } from "@/intelligence";
+import { analyzeCoverageFromGame, analyzeEditorialFromGame, analyzeRecommendation, type RecommendationAnalysis } from "@/intelligence";
 import type { Game } from "@/types";
+import type { CoverageAnalysis, EditorialAnalysis } from "@/intelligence/types";
 
 
 export const Route = createFileRoute("/")({
@@ -47,7 +48,16 @@ function DashboardPage() {
   });
 
   const games = matchesQuery.data ?? [];
-  const recommended = games.slice(0, 3);
+  const ranked = games
+    .map((g) => {
+      const coverage = analyzeCoverageFromGame(g);
+      const editorial = analyzeEditorialFromGame(g);
+      const recommendation = analyzeRecommendation(coverage, editorial);
+      return { game: g, coverage, editorial, recommendation };
+    })
+    .sort((a, b) => b.recommendation.score - a.recommendation.score);
+  const bestOfDay = ranked[0];
+  const recommended = ranked.slice(0, 3);
   const todayISO = new Date().toISOString().slice(0, 10);
   const gamesToday = games.filter((g) => g.date === todayISO).length;
 
@@ -81,6 +91,50 @@ function DashboardPage() {
         </div>
       </header>
 
+      {/* Best coverage of the day */}
+      {matchesQuery.isSuccess && bestOfDay && (
+        <section className="mt-8">
+          <SectionHeader
+            title="Melhor cobertura do dia"
+            subtitle="Combinação de Editorial e Coverage Score"
+            icon={<Trophy className="h-4 w-4" />}
+          />
+          <div className="mt-4">
+            <BestCoverageCard
+              game={bestOfDay.game}
+              coverage={bestOfDay.coverage}
+              editorial={bestOfDay.editorial}
+              recommendation={bestOfDay.recommendation}
+            />
+          </div>
+        </section>
+      )}
+
+      {/* Ranking de coberturas */}
+      {matchesQuery.isSuccess && ranked.length > 0 && (
+        <section className="mt-8">
+          <SectionHeader
+            title="Ranking de coberturas"
+            subtitle="Partidas ordenadas pela recomendação calculada"
+            icon={<ListOrdered className="h-4 w-4" />}
+          />
+          <div className="mt-4 rounded-xl border border-border bg-card">
+            <ul className="divide-y divide-border/60">
+              {ranked.slice(0, 10).map((r, idx) => (
+                <RankingRow
+                  key={r.game.id}
+                  index={idx + 1}
+                  game={r.game}
+                  coverage={r.coverage}
+                  editorial={r.editorial}
+                  recommendation={r.recommendation}
+                />
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
+
       {/* Recommended games */}
       <section className="mt-8">
         <SectionHeader
@@ -103,7 +157,7 @@ function DashboardPage() {
               Nenhuma partida disponível no momento.
             </p>
           )}
-          {matchesQuery.isSuccess && recommended.map((g) => <RecommendedCard key={g.id} game={g} />)}
+          {matchesQuery.isSuccess && recommended.map((r) => <RecommendedCard key={r.game.id} game={r.game} />)}
         </div>
       </section>
 
@@ -277,5 +331,154 @@ function RecommendedCard({ game }: { game: Game }) {
         </span>
       </div>
     </Link>
+  );
+}
+
+function recommendationTone(rec: RecommendationAnalysis["recommendation"]) {
+  if (rec === "Recomendado") return "text-success border-success/30 bg-success/10";
+  if (rec === "Opcional") return "text-warning border-warning/30 bg-warning/10";
+  return "text-muted-foreground border-border bg-muted/30";
+}
+
+function PriorityStars({ count }: { count: number }) {
+  return (
+    <span className="inline-flex items-center gap-0.5" aria-label={`${count} de 5 estrelas`}>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={cn(
+            "h-3.5 w-3.5",
+            i < count ? "fill-warning text-warning" : "text-muted-foreground/40",
+          )}
+        />
+      ))}
+    </span>
+  );
+}
+
+function BestCoverageCard({
+  game,
+  coverage,
+  editorial,
+  recommendation,
+}: {
+  game: Game;
+  coverage: CoverageAnalysis;
+  editorial: EditorialAnalysis;
+  recommendation: RecommendationAnalysis;
+}) {
+  return (
+    <Link
+      to="/briefing/$id"
+      params={{ id: game.id }}
+      className="group flex flex-col gap-4 rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-6 transition-colors hover:border-primary/60"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-widest text-primary">
+            <Trophy className="h-3 w-3" /> Melhor cobertura
+          </div>
+          <h3 className="mt-2 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+            {game.homeTeam} <span className="text-muted-foreground">vs</span> {game.awayTeam}
+          </h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {game.competition} · {game.stadium}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1.5">
+          <span
+            className={cn(
+              "rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider",
+              recommendationTone(recommendation.recommendation),
+            )}
+          >
+            {recommendation.recommendation}
+          </span>
+          <PriorityStars count={recommendation.priority} />
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Confiança {recommendation.confidence}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <MiniStat label="Editorial" value={editorial.editorialScore} tone="primary" />
+        <MiniStat label="Coverage" value={coverage.coverageScore} />
+        <MiniStat label="Score final" value={recommendation.score} tone="primary" />
+      </div>
+
+      <p className="text-sm text-foreground/80">{recommendation.summary}</p>
+
+      <div className="flex items-center justify-end text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
+        Abrir briefing <ArrowUpRight className="ml-1 h-3 w-3" />
+      </div>
+    </Link>
+  );
+}
+
+function MiniStat({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "primary" }) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-background/40 p-3">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className={cn("mt-1 text-xl font-semibold tabular-nums", tone === "primary" ? "text-primary" : "text-foreground")}>{value}</p>
+    </div>
+  );
+}
+
+function RankingRow({
+  index,
+  game,
+  coverage,
+  editorial,
+  recommendation,
+}: {
+  index: number;
+  game: Game;
+  coverage: CoverageAnalysis;
+  editorial: EditorialAnalysis;
+  recommendation: RecommendationAnalysis;
+}) {
+  return (
+    <li>
+      <Link
+        to="/briefing/$id"
+        params={{ id: game.id }}
+        className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-muted/30"
+      >
+        <span className="w-6 shrink-0 text-center text-xs font-semibold tabular-nums text-muted-foreground">
+          {index}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-foreground">
+            {game.homeTeam} <span className="text-muted-foreground">vs</span> {game.awayTeam}
+          </p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">{game.competition}</p>
+        </div>
+        <div className="hidden sm:block">
+          <PriorityStars count={recommendation.priority} />
+        </div>
+        <span
+          className={cn(
+            "hidden rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider md:inline-flex",
+            recommendationTone(recommendation.recommendation),
+          )}
+        >
+          {recommendation.recommendation}
+        </span>
+        <div className="flex items-center gap-3 text-xs tabular-nums">
+          <span className="text-muted-foreground">
+            E <span className="font-semibold text-foreground">{editorial.editorialScore}</span>
+          </span>
+          <span className="text-muted-foreground">
+            C <span className="font-semibold text-foreground">{coverage.coverageScore}</span>
+          </span>
+          <span className="text-primary">
+            <span className="text-[10px] uppercase tracking-wider">Score</span>{" "}
+            <span className="font-semibold">{recommendation.score}</span>
+          </span>
+        </div>
+        <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
+      </Link>
+    </li>
   );
 }
