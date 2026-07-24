@@ -1,5 +1,5 @@
 import { Calendar, Clock, MapPin, Trophy, Cloud, Sun, CloudRain, Moon, Navigation } from "lucide-react";
-import type { Game } from "@/lib/mock-games";
+import type { Game } from "@/types";
 
 const weatherIcon = {
   sun: Sun,

@@ -4,13 +4,17 @@ import { ArrowLeft, FileText, Star, AlertTriangle, ListChecks, Check, LayoutGrid
 import { Layout } from "@/components/app/Layout";
 import { Header } from "@/components/app/Header";
 import { Button } from "@/components/ui/button";
-import { CoverageScore, EditorialScore } from "@/components/app/CoverageScore";
+import { CoverageScore } from "@/components/app/CoverageScore";
+import { EditorialScore } from "@/components/app/EditorialScore";
+
 import { GameSummary } from "@/components/app/GameSummary";
 import { BriefingSection } from "@/components/app/BriefingSection";
 import { PlayerPriorityCard } from "@/components/app/PlayerPriorityCard";
 import { ShotList } from "@/components/app/ShotList";
 import { cn } from "@/lib/utils";
-import { getGameById, type Game } from "@/lib/mock-games";
+import { getGameById } from "@/services/gameService";
+import type { Game } from "@/types";
+
 
 export const Route = createFileRoute("/briefing/$id")({
   head: () => ({

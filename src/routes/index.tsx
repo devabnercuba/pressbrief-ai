@@ -5,7 +5,9 @@ import { FilterBar } from "@/components/app/FilterBar";
 import { GameCard } from "@/components/app/GameCard";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { mockGames, pendingCredentials, daySummary, userProfile } from "@/lib/mock-games";
+import { listGames, listRecommendedGames, listPendingCredentials, getDaySummary, getUserProfile } from "@/services/gameService";
+import type { Game } from "@/types";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,8 +29,13 @@ function greeting() {
 }
 
 function DashboardPage() {
-  const recommended = [...mockGames].sort((a, b) => b.coverageScore - a.coverageScore).slice(0, 3);
+  const games = listGames();
+  const recommended = listRecommendedGames(3);
+  const credentials = listPendingCredentials();
+  const summary = getDaySummary();
+  const profile = getUserProfile();
   const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+
 
   return (
     <Layout>
@@ -38,7 +45,7 @@ function DashboardPage() {
           <div>
             <p className="text-xs uppercase tracking-widest text-muted-foreground">{today}</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              {greeting()}, {userProfile.firstName}
+              {greeting()}, {profile.firstName}
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
               Aqui está o resumo do seu dia. Foque no que importa.
@@ -53,10 +60,10 @@ function DashboardPage() {
 
         {/* Day summary */}
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <SummaryCard icon={Sunrise} label="Jogos hoje" value={daySummary.gamesToday} />
-          <SummaryCard icon={Sparkles} label="Novas oportunidades" value={daySummary.newOpportunities} tone="primary" />
-          <SummaryCard icon={TicketCheck} label="Credenciamentos pendentes" value={daySummary.pendingCredentials} tone="warning" />
-          <SummaryCard icon={FileText} label="Pautas mapeadas" value={daySummary.totalPautas} />
+          <SummaryCard icon={Sunrise} label="Jogos hoje" value={summary.gamesToday} />
+          <SummaryCard icon={Sparkles} label="Novas oportunidades" value={summary.newOpportunities} tone="primary" />
+          <SummaryCard icon={TicketCheck} label="Credenciamentos pendentes" value={summary.pendingCredentials} tone="warning" />
+          <SummaryCard icon={FileText} label="Pautas mapeadas" value={summary.totalPautas} />
         </div>
       </header>
 
@@ -83,7 +90,7 @@ function DashboardPage() {
         />
         <div className="mt-4 rounded-xl border border-border bg-card">
           <ul className="divide-y divide-border/60">
-            {pendingCredentials.map((c) => (
+            {credentials.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-4 px-5 py-4">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">
@@ -128,7 +135,7 @@ function DashboardPage() {
           <FilterBar />
         </div>
         <div className="mt-4 space-y-4">
-          {mockGames.map((g) => (
+          {games.map((g) => (
             <GameCard key={g.id} game={g} />
           ))}
         </div>
@@ -175,7 +182,7 @@ function SectionHeader({ title, subtitle, icon }: { title: string; subtitle: str
   );
 }
 
-function RecommendedCard({ game }: { game: (typeof mockGames)[number] }) {
+function RecommendedCard({ game }: { game: Game }) {
   return (
     <Link
       to="/briefing/$id"

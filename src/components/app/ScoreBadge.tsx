@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { Opportunity } from "@/lib/mock-games";
+import type { Opportunity } from "@/types";
 
 const map: Record<Opportunity, { label: string; className: string; dot: string }> = {
   high: {
