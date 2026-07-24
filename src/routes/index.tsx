@@ -1,11 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Sunrise, Sparkles, TicketCheck, FileText, ArrowUpRight, Radar as RadarIcon, Clock } from "lucide-react";
 import { Layout } from "@/components/app/Layout";
 import { FilterBar } from "@/components/app/FilterBar";
 import { GameCard } from "@/components/app/GameCard";
+import { GameCardSkeleton } from "@/components/app/GameCardSkeleton";
+import { ApiErrorState } from "@/components/app/ApiErrorState";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { listGames, listRecommendedGames, listPendingCredentials, getDaySummary, getUserProfile } from "@/services/gameService";
+import { listPendingCredentials, getDaySummary, getUserProfile } from "@/services/gameService";
+import { listMatches } from "@/services/footballDataService";
 import type { Game } from "@/types";
 
 
@@ -29,13 +33,22 @@ function greeting() {
 }
 
 function DashboardPage() {
-  const games = listGames();
-  const recommended = listRecommendedGames(3);
   const credentials = listPendingCredentials();
   const summary = getDaySummary();
   const profile = getUserProfile();
   const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
 
+  const matchesQuery = useQuery({
+    queryKey: ["fd-matches"],
+    queryFn: () => listMatches(),
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  const games = matchesQuery.data ?? [];
+  const recommended = games.slice(0, 3);
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const gamesToday = games.filter((g) => g.date === todayISO).length;
 
   return (
     <Layout>
@@ -60,8 +73,8 @@ function DashboardPage() {
 
         {/* Day summary */}
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <SummaryCard icon={Sunrise} label="Jogos hoje" value={summary.gamesToday} />
-          <SummaryCard icon={Sparkles} label="Novas oportunidades" value={summary.newOpportunities} tone="primary" />
+          <SummaryCard icon={Sunrise} label="Jogos hoje" value={matchesQuery.isSuccess ? gamesToday : summary.gamesToday} />
+          <SummaryCard icon={Sparkles} label="Partidas disponíveis" value={matchesQuery.isSuccess ? games.length : summary.newOpportunities} tone="primary" />
           <SummaryCard icon={TicketCheck} label="Credenciamentos pendentes" value={summary.pendingCredentials} tone="warning" />
           <SummaryCard icon={FileText} label="Pautas mapeadas" value={summary.totalPautas} />
         </div>
@@ -71,13 +84,25 @@ function DashboardPage() {
       <section className="mt-8">
         <SectionHeader
           title="Jogos recomendados"
-          subtitle="Selecionados por Coverage Score e demanda editorial"
+          subtitle="Próximas partidas retornadas pela API"
           icon={<Sparkles className="h-4 w-4" />}
         />
         <div className="mt-4 grid gap-3 lg:grid-cols-3">
-          {recommended.map((g) => (
-            <RecommendedCard key={g.id} game={g} />
-          ))}
+          {matchesQuery.isLoading &&
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-40 animate-pulse rounded-xl border border-border bg-card" />
+            ))}
+          {matchesQuery.isError && (
+            <div className="lg:col-span-3">
+              <ApiErrorState onRetry={() => matchesQuery.refetch()} />
+            </div>
+          )}
+          {matchesQuery.isSuccess && recommended.length === 0 && (
+            <p className="text-sm text-muted-foreground lg:col-span-3">
+              Nenhuma partida disponível no momento.
+            </p>
+          )}
+          {matchesQuery.isSuccess && recommended.map((g) => <RecommendedCard key={g.id} game={g} />)}
         </div>
       </section>
 
@@ -128,16 +153,22 @@ function DashboardPage() {
       <section className="mt-10">
         <SectionHeader
           title="Radar de oportunidades"
-          subtitle="Todos os jogos mapeados para as próximas datas"
+          subtitle="Partidas ao vivo da API Football-Data.org"
           icon={<RadarIcon className="h-4 w-4" />}
         />
         <div className="mt-4">
           <FilterBar />
         </div>
         <div className="mt-4 space-y-4">
-          {games.map((g) => (
-            <GameCard key={g.id} game={g} />
-          ))}
+          {matchesQuery.isLoading &&
+            Array.from({ length: 3 }).map((_, i) => <GameCardSkeleton key={i} />)}
+          {matchesQuery.isError && <ApiErrorState onRetry={() => matchesQuery.refetch()} />}
+          {matchesQuery.isSuccess && games.length === 0 && (
+            <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+              Nenhuma partida encontrada para o período atual.
+            </div>
+          )}
+          {matchesQuery.isSuccess && games.map((g) => <GameCard key={g.id} game={g} />)}
         </div>
       </section>
     </Layout>
@@ -195,7 +226,9 @@ function RecommendedCard({ game }: { game: Game }) {
             <img src={game.homeCrest} alt="" className="h-9 w-9 rounded-md ring-2 ring-card" />
             <img src={game.awayCrest} alt="" className="h-9 w-9 rounded-md ring-2 ring-card" />
           </div>
-          <span className="text-lg font-semibold tabular-nums text-success">{game.coverageScore}</span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {game.weather.condition}
+          </span>
         </div>
         <h3 className="mt-3 text-sm font-semibold text-foreground">
           {game.homeTeam} vs {game.awayTeam}
