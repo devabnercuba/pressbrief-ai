@@ -48,7 +48,16 @@ function DashboardPage() {
   });
 
   const games = matchesQuery.data ?? [];
-  const recommended = games.slice(0, 3);
+  const ranked = games
+    .map((g) => {
+      const coverage = analyzeCoverageFromGame(g);
+      const editorial = analyzeEditorialFromGame(g);
+      const recommendation = analyzeRecommendation(coverage, editorial);
+      return { game: g, coverage, editorial, recommendation };
+    })
+    .sort((a, b) => b.recommendation.score - a.recommendation.score);
+  const bestOfDay = ranked[0];
+  const recommended = ranked.slice(0, 3);
   const todayISO = new Date().toISOString().slice(0, 10);
   const gamesToday = games.filter((g) => g.date === todayISO).length;
 
