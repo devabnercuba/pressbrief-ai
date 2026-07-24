@@ -182,7 +182,7 @@ function SectionHeader({ title, subtitle, icon }: { title: string; subtitle: str
   );
 }
 
-function RecommendedCard({ game }: { game: (typeof mockGames)[number] }) {
+function RecommendedCard({ game }: { game: Game }) {
   return (
     <Link
       to="/briefing/$id"
