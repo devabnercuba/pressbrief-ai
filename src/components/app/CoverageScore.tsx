@@ -19,9 +19,8 @@ export function CoverageScore({ score, size = "md", label = "Coverage Score", cl
   return <ScoreDial score={score} size={size} label={label} className={className} />;
 }
 
-export function EditorialScore({ score, size = "md", label = "Editorial Score", className }: Props) {
-  return <ScoreDial score={score} size={size} label={label} className={className} />;
-}
+// EditorialScore now lives in ./EditorialScore.tsx
+
 
 function ScoreDial({ score, size, label, className }: Required<Pick<Props, "score" | "size" | "label">> & { className?: string }) {
   const dims = size === "lg" ? 72 : size === "sm" ? 40 : 56;

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { type Game } from "./mock-games";
+import type { Game } from "@/types";
+
 
 interface GamesStore {
   savedGames: Game[];

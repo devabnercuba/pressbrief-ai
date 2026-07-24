@@ -1,5 +1,5 @@
 import { Star } from "lucide-react";
-import type { PriorityPlayer } from "@/lib/mock-games";
+import type { Player as PriorityPlayer } from "@/types";
 import { cn } from "@/lib/utils";
 
 const demandColor: Record<PriorityPlayer["demand"], string> = {

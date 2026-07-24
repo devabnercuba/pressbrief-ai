@@ -1,62 +1,24 @@
-export type Opportunity = "high" | "medium" | "low";
+// Mock data source. Consumidores devem importar via src/services/*, não daqui.
+import type {
+  ChecklistItem,
+  Credential,
+  DaySummary,
+  Game,
+  UserProfile,
+} from "@/types";
 
-export interface PriorityPlayer {
-  id: string;
-  name: string;
-  team: string;
-  position: string;
-  number: number;
-  reason: string;
-  marketValue: string;
-  demand: "Alta" | "Média" | "Baixa";
-}
+export type {
+  ChecklistItem,
+  Credential,
+  DaySummary,
+  Game,
+  Opportunity,
+  Player as PriorityPlayer,
+  ShotListItem as ShotItem,
+  UserProfile,
+  Weather,
+} from "@/types";
 
-export interface ShotItem {
-  id: string;
-  title: string;
-  description: string;
-  priority: "essencial" | "recomendada" | "extra";
-}
-
-export interface ChecklistItem {
-  id: string;
-  label: string;
-}
-
-export interface Weather {
-  condition: string; // "Ensolarado", "Nublado", "Chuva leve"
-  tempC: number;
-  humidity: number; // %
-  icon: "sun" | "cloud" | "rain" | "night";
-}
-
-export interface Game {
-  id: string;
-  homeTeam: string;
-  homeCrest: string;
-  awayTeam: string;
-  awayCrest: string;
-  competition: string;
-  date: string; // ISO
-  time: string;
-  stadium: string;
-  city: string;
-  state: string;
-  coverageScore: number;
-  editorialScore: number;
-  distanceKm: number;
-  weather: Weather;
-  pautasCount: number;
-  priorityPlayersCount: number;
-  opportunity: Opportunity;
-  reasons: string[];
-  summary: string;
-  pautas: { id: string; title: string; description: string }[];
-  priorityPlayers: PriorityPlayer[];
-  mustShoot: string[];
-  checklist: ChecklistItem[];
-  shotList: ShotItem[];
-}
 
 const crest = (label: string, bg: string, fg = "#ffffff") =>
   `data:image/svg+xml;utf8,${encodeURIComponent(
@@ -326,16 +288,7 @@ export const mockGames: Game[] = [
   },
 ];
 
-export const getGameById = (id: string) => mockGames.find((g) => g.id === id);
-
-export interface Credential {
-  id: string;
-  gameId: string;
-  homeTeam: string;
-  awayTeam: string;
-  status: "pendente" | "aprovado" | "aguardando";
-  deadline: string;
-}
+export const getGameById = (id: string): Game | undefined => mockGames.find((g) => g.id === id);
 
 export const pendingCredentials: Credential[] = [
   { id: "cr1", gameId: "flu-fla-2026", homeTeam: "Fluminense", awayTeam: "Flamengo", status: "pendente", deadline: "24/07" },
@@ -343,13 +296,14 @@ export const pendingCredentials: Credential[] = [
   { id: "cr3", gameId: "atl-cru-2026", homeTeam: "Atlético-MG", awayTeam: "Cruzeiro", status: "pendente", deadline: "27/07" },
 ];
 
-export const daySummary = {
+export const daySummary: DaySummary = {
   gamesToday: 3,
   newOpportunities: 2,
   pendingCredentials: 3,
   totalPautas: mockGames.reduce((acc, g) => acc + g.pautasCount, 0),
 };
 
-export const userProfile = {
+export const userProfile: UserProfile = {
   firstName: "Rafael",
 };
+

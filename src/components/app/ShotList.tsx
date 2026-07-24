@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Camera, Check } from "lucide-react";
-import type { ShotItem } from "@/lib/mock-games";
+import type { ShotListItem as ShotItem } from "@/types";
 import { cn } from "@/lib/utils";
 
 const priorityConfig: Record<ShotItem["priority"], { label: string; className: string }> = {

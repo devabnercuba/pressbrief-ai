@@ -2,9 +2,11 @@ import { Link } from "@tanstack/react-router";
 import { Calendar, Clock, MapPin, Trophy, Check, Plus, ArrowUpRight, Navigation, Cloud, Sun, CloudRain, Moon, FileText, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScoreBadge } from "./ScoreBadge";
-import { CoverageScore, EditorialScore } from "./CoverageScore";
+import { CoverageScore } from "./CoverageScore";
+import { EditorialScore } from "./EditorialScore";
 import { useGamesStore } from "@/lib/games-store";
-import type { Game } from "@/lib/mock-games";
+import type { Game } from "@/types";
+
 
 const weatherIcon = { sun: Sun, cloud: Cloud, rain: CloudRain, night: Moon } as const;
 

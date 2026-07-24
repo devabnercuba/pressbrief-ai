@@ -5,7 +5,9 @@ import { FilterBar } from "@/components/app/FilterBar";
 import { GameCard } from "@/components/app/GameCard";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { mockGames, pendingCredentials, daySummary, userProfile } from "@/lib/mock-games";
+import { listGames, listRecommendedGames, listPendingCredentials, getDaySummary, getUserProfile } from "@/services/gameService";
+import type { Game } from "@/types";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,8 +29,13 @@ function greeting() {
 }
 
 function DashboardPage() {
-  const recommended = [...mockGames].sort((a, b) => b.coverageScore - a.coverageScore).slice(0, 3);
+  const games = listGames();
+  const recommended = listRecommendedGames(3);
+  const credentials = listPendingCredentials();
+  const summary = getDaySummary();
+  const profile = getUserProfile();
   const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+
 
   return (
     <Layout>
