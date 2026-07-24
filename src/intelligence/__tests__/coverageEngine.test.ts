@@ -3,7 +3,7 @@
 // ou por qualquer runner compatível com node:test.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { analyzeCoverage } from "../coverageEngine.ts";
+import { analyzeCoverage } from "../coverageEngine";
 
 test("clássico local com competição top gera rating Excelente", () => {
   const r = analyzeCoverage({
