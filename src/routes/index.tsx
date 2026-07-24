@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { listPendingCredentials, getDaySummary, getUserProfile } from "@/services/gameService";
 import { listMatches } from "@/services/footballDataService";
-import { analyzeCoverageFromGame } from "@/intelligence";
+import { analyzeCoverageFromGame, analyzeEditorialFromGame } from "@/intelligence";
 import type { Game } from "@/types";
 
 
@@ -215,14 +215,15 @@ function SectionHeader({ title, subtitle, icon }: { title: string; subtitle: str
 }
 
 function RecommendedCard({ game }: { game: Game }) {
+  const editorial = analyzeEditorialFromGame(game);
   const coverage = analyzeCoverageFromGame(game);
-  const topReason = coverage.positives[0];
+  const topFactors = editorial.positiveFactors.slice(0, 3);
   const ratingTone =
-    coverage.rating === "Excelente"
+    editorial.rating === "Excelente"
       ? "text-success border-success/30 bg-success/10"
-      : coverage.rating === "Bom"
+      : editorial.rating === "Bom"
         ? "text-primary border-primary/30 bg-primary/10"
-        : coverage.rating === "Regular"
+        : editorial.rating === "Regular"
           ? "text-warning border-warning/30 bg-warning/10"
           : "text-muted-foreground border-border bg-muted/30";
   return (
@@ -232,28 +233,45 @@ function RecommendedCard({ game }: { game: Game }) {
       className="group flex flex-col justify-between rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40"
     >
       <div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex -space-x-2">
             <img src={game.homeCrest} alt="" className="h-9 w-9 rounded-md ring-2 ring-card" />
             <img src={game.awayCrest} alt="" className="h-9 w-9 rounded-md ring-2 ring-card" />
           </div>
-          <div className="flex items-center gap-2">
-            <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider", ratingTone)}>
-              {coverage.rating}
-            </span>
-            <span className="text-xs font-semibold tabular-nums text-foreground">{coverage.coverageScore}</span>
+          <div className="text-right">
+            <div className="flex items-center justify-end gap-2">
+              <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider", ratingTone)}>
+                {editorial.rating}
+              </span>
+              <span className="text-lg font-semibold tabular-nums text-foreground">{editorial.editorialScore}</span>
+            </div>
+            <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">Editorial</p>
           </div>
         </div>
         <h3 className="mt-3 text-sm font-semibold text-foreground">
           {game.homeTeam} vs {game.awayTeam}
         </h3>
         <p className="mt-0.5 text-xs text-muted-foreground">{game.competition}</p>
-        {topReason && (
-          <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{topReason}</p>
+        <p className="mt-2 line-clamp-2 text-xs text-foreground/80">{editorial.summary}</p>
+        {topFactors.length > 0 && (
+          <ul className="mt-2 flex flex-wrap gap-1">
+            {topFactors.map((f) => (
+              <li
+                key={f}
+                className="rounded-full border border-border bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground"
+              >
+                {f}
+              </li>
+            ))}
+          </ul>
         )}
       </div>
       <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-        <span>{game.stadium}</span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-wider">Coverage</span>
+          <span className="font-semibold tabular-nums text-foreground/90">{coverage.coverageScore}</span>
+          <span className="text-[10px]">· {coverage.rating}</span>
+        </span>
         <span className="inline-flex items-center gap-1 text-primary opacity-0 transition-opacity group-hover:opacity-100">
           Abrir briefing <ArrowUpRight className="h-3 w-3" />
         </span>
