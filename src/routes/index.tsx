@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Sunrise, Sparkles, TicketCheck, FileText, ArrowUpRight, Radar as RadarIcon, Clock } from "lucide-react";
+import { Sunrise, Sparkles, TicketCheck, FileText, ArrowUpRight, Radar as RadarIcon, Clock, Trophy, Star, ListOrdered } from "lucide-react";
 import { Layout } from "@/components/app/Layout";
 import { FilterBar } from "@/components/app/FilterBar";
 import { GameCard } from "@/components/app/GameCard";
@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { listPendingCredentials, getDaySummary, getUserProfile } from "@/services/gameService";
 import { listMatches } from "@/services/footballDataService";
-import { analyzeCoverageFromGame, analyzeEditorialFromGame } from "@/intelligence";
+import { analyzeCoverageFromGame, analyzeEditorialFromGame, analyzeRecommendation, type RecommendationAnalysis } from "@/intelligence";
 import type { Game } from "@/types";
+import type { CoverageAnalysis, EditorialAnalysis } from "@/intelligence/types";
 
 
 export const Route = createFileRoute("/")({
