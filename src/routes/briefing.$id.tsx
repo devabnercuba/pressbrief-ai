@@ -13,6 +13,7 @@ import { PlayerPriorityCard } from "@/components/app/PlayerPriorityCard";
 import { ShotList } from "@/components/app/ShotList";
 import { cn } from "@/lib/utils";
 import { getGameById } from "@/services/gameService";
+import { getMatchGameById } from "@/services/footballDataService";
 import type { Game } from "@/types";
 
 
@@ -25,8 +26,8 @@ export const Route = createFileRoute("/briefing/$id")({
       { property: "og:description", content: "Resumo, pautas, jogadores prioritários, shot list e checklist." },
     ],
   }),
-  loader: ({ params }): { game: Game } => {
-    const game = getGameById(params.id);
+  loader: async ({ params }): Promise<{ game: Game }> => {
+    const game = getGameById(params.id) ?? (await getMatchGameById(params.id).catch(() => undefined));
     if (!game) throw notFound();
     return { game };
   },
@@ -43,7 +44,9 @@ function BriefingPage() {
       else next.add(id);
       return next;
     });
-  const progress = Math.round((checked.size / game.checklist.length) * 100);
+  const progress = game.checklist.length
+    ? Math.round((checked.size / game.checklist.length) * 100)
+    : 0;
 
   return (
     <Layout>
