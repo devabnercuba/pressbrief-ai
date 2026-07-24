@@ -59,13 +59,36 @@ export const fetchTeamsByCompetition = createServerFn({ method: "GET" })
     fdFetch<{ teams: FDTeam[] }>(`/competitions/${data.code}/teams`),
   );
 
+export interface FDStandingsResponse {
+  competition?: FDCompetition;
+  season?: { id: number; startDate: string; endDate: string; currentMatchday?: number };
+  standings?: Array<{
+    stage: string;
+    type: string;
+    group?: string | null;
+    table: Array<{
+      position: number;
+      team: FDTeam;
+      playedGames: number;
+      won: number;
+      draw: number;
+      lost: number;
+      points: number;
+      goalsFor: number;
+      goalsAgainst: number;
+      goalDifference: number;
+    }>;
+  }>;
+}
+
 export const fetchStandings = createServerFn({ method: "GET" })
   .inputValidator((input: { code: string }) =>
     z.object({ code: z.string().min(2) }).parse(input),
   )
-  .handler(async ({ data }) =>
-    fdFetch<{ standings: unknown[] }>(`/competitions/${data.code}/standings`),
+  .handler(async ({ data }): Promise<FDStandingsResponse> =>
+    fdFetch<FDStandingsResponse>(`/competitions/${data.code}/standings`),
   );
+
 
 export const fetchMatchById = createServerFn({ method: "GET" })
   .inputValidator((input: { id: number }) =>

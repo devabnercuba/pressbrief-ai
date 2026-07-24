@@ -8,6 +8,7 @@ import {
   fetchTeamsByCompetition,
   type FDCompetition,
   type FDMatch,
+  type FDStandingsResponse,
   type FDTeam,
 } from "@/lib/football-data.functions";
 import type { Game, Opportunity } from "@/types";
@@ -103,7 +104,9 @@ export async function listTeamsByCompetition(code: string): Promise<FDTeam[]> {
   return res.teams ?? [];
 }
 
-export async function getStandings(code: string) {
+export async function getStandings(
+  code: string,
+): Promise<NonNullable<FDStandingsResponse["standings"]>> {
   const res = await fetchStandings({ data: { code } });
   return res.standings ?? [];
 }
