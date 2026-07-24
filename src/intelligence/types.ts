@@ -32,3 +32,42 @@ export interface CoverageInput {
   historyScore?: number;     // 0..100
   editorialScore?: number;   // 0..100 (fallback p/ salesPotential)
 }
+
+// ===== Editorial Engine =====
+
+export type EditorialRating = CoverageRating;
+
+export interface EditorialFactorBreakdown {
+  key: string;
+  label: string;
+  weight: number;   // 0..1
+  score: number;    // 0..100
+  contribution: number; // weight * score
+}
+
+export interface EditorialAnalysis {
+  editorialScore: number; // 0..100
+  rating: EditorialRating;
+  summary: string;
+  positiveFactors: string[];
+  attentionFactors: string[];
+  breakdown: EditorialFactorBreakdown[];
+}
+
+// Entrada do Editorial Engine. Fatores narrativos podem vir como boolean
+// (presente/ausente) ou number (0..100 — intensidade).
+export interface EditorialInput {
+  competition?: string;
+  homeTeam?: string;
+  awayTeam?: string;
+  titleRace?: boolean | number;
+  relegationBattle?: boolean | number;
+  farewell?: boolean | number;
+  derby?: boolean | number;
+  record?: boolean | number;
+  debut?: boolean | number;
+  injuryReturn?: boolean | number;
+  coachPressure?: boolean | number;
+  playerInForm?: boolean | number;
+  clubCrisis?: boolean | number;
+}
