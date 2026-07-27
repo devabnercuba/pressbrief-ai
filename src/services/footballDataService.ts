@@ -86,6 +86,15 @@ export async function listMatches(params?: {
   return (res.matches ?? []).map(mapMatchToGame);
 }
 
+// Busca partidas cobrindo o mês atual + próximo mês. Base do Calendário
+// Inteligente; a arquitetura permite trocar por temporadas inteiras
+// futuramente sem impacto nas páginas.
+export async function listMatchesForCalendar(from: Date = new Date()): Promise<Game[]> {
+  const { currentAndNextMonthRange } = await import("@/lib/calendar-utils");
+  const range = currentAndNextMonthRange(from);
+  return listMatches(range);
+}
+
 export async function getMatchGameById(gameId: string): Promise<Game | undefined> {
   if (!gameId.startsWith(FD_ID_PREFIX)) return undefined;
   const raw = Number(gameId.slice(FD_ID_PREFIX.length));
