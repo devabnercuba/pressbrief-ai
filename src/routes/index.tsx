@@ -400,3 +400,26 @@ function ScoreStat({ label, value, tone = "default" }: { label: string; value: n
     </div>
   );
 }
+
+function DashboardKPIs({ monthGames }: { monthGames: number }) {
+  const { savedGames } = useGamesStore();
+  const { requests } = useCredentialsStore();
+  const pending = pendingRequests(requests).length;
+  const approved = approvedRequests(requests).length;
+  const items = [
+    { label: "Jogos do mês", value: monthGames },
+    { label: "Jogos de interesse", value: savedGames.length },
+    { label: "Credenciamentos pendentes", value: pending },
+    { label: "Jogos aprovados", value: approved },
+  ];
+  return (
+    <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {items.map((it) => (
+        <div key={it.label} className="rounded-xl border border-border bg-card p-4">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{it.label}</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">{it.value}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
