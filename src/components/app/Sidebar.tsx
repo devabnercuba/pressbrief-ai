@@ -1,11 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Radar, Star, Calendar, BarChart3, User, Settings } from "lucide-react";
+import { Radar, Star, Calendar, BarChart3, User, Settings, FileCheck, CalendarCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGamesStore } from "@/lib/games-store";
+import { useCredentialsStore } from "@/lib/credentials-store";
+import { approvedRequests, pendingRequests } from "@/lib/credentials";
 
 const items = [
   { to: "/", label: "Radar", icon: Radar },
   { to: "/meus-jogos", label: "Meus Jogos", icon: Star },
+  { to: "/credenciamentos", label: "Credenciamentos", icon: FileCheck },
+  { to: "/agenda", label: "Agenda", icon: CalendarCheck },
   { to: "/calendario", label: "Calendário", icon: Calendar },
   { to: "/historico", label: "Histórico", icon: BarChart3 },
   { to: "/perfil", label: "Perfil", icon: User },
@@ -15,6 +19,9 @@ const items = [
 export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { savedGames } = useGamesStore();
+  const { requests } = useCredentialsStore();
+  const pendingCount = pendingRequests(requests).length;
+  const approvedCount = approvedRequests(requests).length;
 
   return (
     <aside className="hidden md:flex md:w-64 lg:w-72 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
@@ -39,7 +46,11 @@ export function Sidebar() {
           {items.map((item) => {
             const active =
               item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
-            const badge = item.to === "/meus-jogos" ? savedGames.length : 0;
+            const badge =
+              item.to === "/meus-jogos" ? savedGames.length
+              : item.to === "/credenciamentos" ? pendingCount
+              : item.to === "/agenda" ? approvedCount
+              : 0;
             return (
               <li key={item.to}>
                 <Link

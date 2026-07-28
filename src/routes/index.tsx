@@ -36,6 +36,8 @@ import {
   type AssignmentAnalysis,
 } from "@/intelligence";
 import { useGamesStore } from "@/lib/games-store";
+import { useCredentialsStore } from "@/lib/credentials-store";
+import { approvedRequests, pendingRequests } from "@/lib/credentials";
 import {
   DEFAULT_FILTERS,
   filterRanked,
@@ -138,6 +140,9 @@ function DashboardPage() {
           Calendário inteligente de coberturas — clique em um dia para ver as partidas.
         </p>
       </header>
+
+      <DashboardKPIs monthGames={ranked.length} />
+
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
         <div className="space-y-4">
@@ -392,6 +397,29 @@ function ScoreStat({ label, value, tone = "default" }: { label: string; value: n
       <p className={cn("mt-1 text-xl font-semibold tabular-nums", tone === "primary" ? "text-primary" : "text-foreground")}>
         {value}
       </p>
+    </div>
+  );
+}
+
+function DashboardKPIs({ monthGames }: { monthGames: number }) {
+  const { savedGames } = useGamesStore();
+  const { requests } = useCredentialsStore();
+  const pending = pendingRequests(requests).length;
+  const approved = approvedRequests(requests).length;
+  const items = [
+    { label: "Jogos do mês", value: monthGames },
+    { label: "Jogos de interesse", value: savedGames.length },
+    { label: "Credenciamentos pendentes", value: pending },
+    { label: "Jogos aprovados", value: approved },
+  ];
+  return (
+    <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {items.map((it) => (
+        <div key={it.label} className="rounded-xl border border-border bg-card p-4">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{it.label}</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">{it.value}</p>
+        </div>
+      ))}
     </div>
   );
 }

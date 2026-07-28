@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { GamesProvider } from "@/lib/games-store";
+import { CredentialsProvider } from "@/lib/credentials-store";
 
 function NotFoundComponent() {
   return (
@@ -131,8 +132,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <GamesProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <CredentialsProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </CredentialsProvider>
       </GamesProvider>
     </QueryClientProvider>
   );

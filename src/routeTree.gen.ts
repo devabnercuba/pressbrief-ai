@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as MeusJogosRouteImport } from './routes/meus-jogos'
 import { Route as HistoricoRouteImport } from './routes/historico'
+import { Route as CredenciamentosRouteImport } from './routes/credenciamentos'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as CalendarioRouteImport } from './routes/calendario'
+import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BriefingIdRouteImport } from './routes/briefing.$id'
 
@@ -32,6 +34,11 @@ const HistoricoRoute = HistoricoRouteImport.update({
   path: '/historico',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CredenciamentosRoute = CredenciamentosRouteImport.update({
+  id: '/credenciamentos',
+  path: '/credenciamentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
   id: '/configuracoes',
   path: '/configuracoes',
@@ -40,6 +47,11 @@ const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
 const CalendarioRoute = CalendarioRouteImport.update({
   id: '/calendario',
   path: '/calendario',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgendaRoute = AgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -55,8 +67,10 @@ const BriefingIdRoute = BriefingIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agenda': typeof AgendaRoute
   '/calendario': typeof CalendarioRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/credenciamentos': typeof CredenciamentosRoute
   '/historico': typeof HistoricoRoute
   '/meus-jogos': typeof MeusJogosRoute
   '/perfil': typeof PerfilRoute
@@ -64,8 +78,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agenda': typeof AgendaRoute
   '/calendario': typeof CalendarioRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/credenciamentos': typeof CredenciamentosRoute
   '/historico': typeof HistoricoRoute
   '/meus-jogos': typeof MeusJogosRoute
   '/perfil': typeof PerfilRoute
@@ -74,8 +90,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agenda': typeof AgendaRoute
   '/calendario': typeof CalendarioRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/credenciamentos': typeof CredenciamentosRoute
   '/historico': typeof HistoricoRoute
   '/meus-jogos': typeof MeusJogosRoute
   '/perfil': typeof PerfilRoute
@@ -85,8 +103,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agenda'
     | '/calendario'
     | '/configuracoes'
+    | '/credenciamentos'
     | '/historico'
     | '/meus-jogos'
     | '/perfil'
@@ -94,8 +114,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agenda'
     | '/calendario'
     | '/configuracoes'
+    | '/credenciamentos'
     | '/historico'
     | '/meus-jogos'
     | '/perfil'
@@ -103,8 +125,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/agenda'
     | '/calendario'
     | '/configuracoes'
+    | '/credenciamentos'
     | '/historico'
     | '/meus-jogos'
     | '/perfil'
@@ -113,8 +137,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgendaRoute: typeof AgendaRoute
   CalendarioRoute: typeof CalendarioRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
+  CredenciamentosRoute: typeof CredenciamentosRoute
   HistoricoRoute: typeof HistoricoRoute
   MeusJogosRoute: typeof MeusJogosRoute
   PerfilRoute: typeof PerfilRoute
@@ -144,6 +170,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoricoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/credenciamentos': {
+      id: '/credenciamentos'
+      path: '/credenciamentos'
+      fullPath: '/credenciamentos'
+      preLoaderRoute: typeof CredenciamentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/configuracoes': {
       id: '/configuracoes'
       path: '/configuracoes'
@@ -156,6 +189,13 @@ declare module '@tanstack/react-router' {
       path: '/calendario'
       fullPath: '/calendario'
       preLoaderRoute: typeof CalendarioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agenda': {
+      id: '/agenda'
+      path: '/agenda'
+      fullPath: '/agenda'
+      preLoaderRoute: typeof AgendaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -177,8 +217,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgendaRoute: AgendaRoute,
   CalendarioRoute: CalendarioRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
+  CredenciamentosRoute: CredenciamentosRoute,
   HistoricoRoute: HistoricoRoute,
   MeusJogosRoute: MeusJogosRoute,
   PerfilRoute: PerfilRoute,
