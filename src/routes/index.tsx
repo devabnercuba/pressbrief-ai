@@ -36,6 +36,8 @@ import {
   type AssignmentAnalysis,
 } from "@/intelligence";
 import { useGamesStore } from "@/lib/games-store";
+import { useCredentialsStore } from "@/lib/credentials-store";
+import { approvedRequests, pendingRequests } from "@/lib/credentials";
 import {
   DEFAULT_FILTERS,
   filterRanked,
@@ -138,6 +140,9 @@ function DashboardPage() {
           Calendário inteligente de coberturas — clique em um dia para ver as partidas.
         </p>
       </header>
+
+      <DashboardKPIs monthGames={ranked.length} />
+
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
         <div className="space-y-4">
