@@ -39,6 +39,27 @@ export const Route = createFileRoute("/briefing/$id")({
 function BriefingPage() {
   const { game } = Route.useLoaderData();
   const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [newsAnalysis, setNewsAnalysis] = useState<GameNewsAnalysis | undefined>(undefined);
+
+  useEffect(() => {
+    let active = true;
+    getNewsService()
+      .analyzeForGame({
+        id: game.id,
+        homeTeam: game.homeTeam,
+        awayTeam: game.awayTeam,
+        competition: game.competition,
+        date: `${game.date}T${game.time ?? "00:00"}:00Z`,
+      })
+      .then((a) => {
+        if (active) setNewsAnalysis(a);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [game.id, game.homeTeam, game.awayTeam, game.competition, game.date, game.time]);
+
   const toggle = (id: string) =>
     setChecked((prev) => {
       const next = new Set(prev);
