@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, FileText, Star, AlertTriangle, ListChecks, Check, LayoutGrid, Camera } from "lucide-react";
 import { Layout } from "@/components/app/Layout";
@@ -11,9 +11,11 @@ import { GameSummary } from "@/components/app/GameSummary";
 import { BriefingSection } from "@/components/app/BriefingSection";
 import { PlayerPriorityCard } from "@/components/app/PlayerPriorityCard";
 import { ShotList } from "@/components/app/ShotList";
+import { EditorialContext } from "@/components/app/EditorialContext";
 import { cn } from "@/lib/utils";
 import { getGameById } from "@/services/gameService";
 import { getMatchGameById } from "@/services/footballDataService";
+import { getNewsService, type GameNewsAnalysis } from "@/news";
 import type { Game } from "@/types";
 
 
