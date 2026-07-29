@@ -96,6 +96,9 @@ function BriefingPage() {
           <GameSummary game={game} />
         </BriefingSection>
 
+        {/* Contexto Editorial (News Intelligence Layer — mock) */}
+        {newsAnalysis && <EditorialContext analysis={newsAnalysis} />}
+
         {/* 2 — Principais pautas */}
         <BriefingSection
           step={2}
