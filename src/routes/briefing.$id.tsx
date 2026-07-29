@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, FileText, Star, AlertTriangle, ListChecks, Check, LayoutGrid, Camera } from "lucide-react";
 import { Layout } from "@/components/app/Layout";
@@ -11,9 +11,11 @@ import { GameSummary } from "@/components/app/GameSummary";
 import { BriefingSection } from "@/components/app/BriefingSection";
 import { PlayerPriorityCard } from "@/components/app/PlayerPriorityCard";
 import { ShotList } from "@/components/app/ShotList";
+import { EditorialContext } from "@/components/app/EditorialContext";
 import { cn } from "@/lib/utils";
 import { getGameById } from "@/services/gameService";
 import { getMatchGameById } from "@/services/footballDataService";
+import { getNewsService, type GameNewsAnalysis } from "@/news";
 import type { Game } from "@/types";
 
 
@@ -37,6 +39,27 @@ export const Route = createFileRoute("/briefing/$id")({
 function BriefingPage() {
   const { game } = Route.useLoaderData();
   const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [newsAnalysis, setNewsAnalysis] = useState<GameNewsAnalysis | undefined>(undefined);
+
+  useEffect(() => {
+    let active = true;
+    getNewsService()
+      .analyzeForGame({
+        id: game.id,
+        homeTeam: game.homeTeam,
+        awayTeam: game.awayTeam,
+        competition: game.competition,
+        date: `${game.date}T${game.time ?? "00:00"}:00Z`,
+      })
+      .then((a) => {
+        if (active) setNewsAnalysis(a);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [game.id, game.homeTeam, game.awayTeam, game.competition, game.date, game.time]);
+
   const toggle = (id: string) =>
     setChecked((prev) => {
       const next = new Set(prev);
@@ -72,6 +95,9 @@ function BriefingPage() {
         <BriefingSection step={1} title="Resumo da partida" subtitle="Contexto e narrativa principal">
           <GameSummary game={game} />
         </BriefingSection>
+
+        {/* Contexto Editorial (News Intelligence Layer — mock) */}
+        {newsAnalysis && <EditorialContext analysis={newsAnalysis} />}
 
         {/* 2 — Principais pautas */}
         <BriefingSection
