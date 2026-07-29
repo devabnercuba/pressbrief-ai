@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { test } from "node:test";
+import assert from "node:assert/strict";
 import { groupArticlesByGame, matchArticleToGame, scoreArticleForGame } from "../newsMatcher";
 import type { MatchableGame, NewsArticle } from "../newsTypes";
 
@@ -8,55 +9,43 @@ const games: MatchableGame[] = [
 ];
 
 const baseArticle = (over: Partial<NewsArticle>): NewsArticle => ({
-  id: "x",
-  title: "",
-  summary: "",
-  content: "",
-  source: "GE",
-  publishedAt: "2026-07-24T10:00:00Z",
-  url: "https://ex.com",
-  teams: [],
-  competition: "Brasileirão Série A",
-  tags: [],
-  confidence: 0.9,
+  id: "x", title: "", summary: "", content: "", source: "GE",
+  publishedAt: "2026-07-24T10:00:00Z", url: "https://ex.com",
+  teams: [], competition: "Brasileirão Série A", tags: [], confidence: 0.9,
   ...over,
 });
 
-describe("newsMatcher", () => {
-  it("relaciona notícia mencionando os dois clubes", () => {
-    const a = baseArticle({ title: "Fluminense e Flamengo se enfrentam no Maracanã", teams: ["Fluminense", "Flamengo"] });
-    const match = matchArticleToGame(a, games);
-    expect(match?.gameId).toBe("flu-fla");
-    expect(match!.score).toBeGreaterThan(0.6);
-  });
+test("matcher relaciona notícia mencionando os dois clubes", () => {
+  const a = baseArticle({ title: "Fluminense e Flamengo se enfrentam no Maracanã", teams: ["Fluminense", "Flamengo"] });
+  const match = matchArticleToGame(a, games);
+  assert.equal(match?.gameId, "flu-fla");
+  assert.ok((match?.score ?? 0) > 0.6);
+});
 
-  it("relaciona por menção parcial (um clube) + competição + proximidade", () => {
-    const a = baseArticle({ title: "Avaí anuncia estreia do atacante", teams: ["Avaí"], competition: "Série B", publishedAt: "2026-07-25T12:00:00Z" });
-    const match = matchArticleToGame(a, games);
-    expect(match?.gameId).toBe("ava-ame");
-  });
+test("matcher relaciona por menção parcial + competição + proximidade", () => {
+  const a = baseArticle({ title: "Avaí anuncia estreia do atacante", teams: ["Avaí"], competition: "Série B", publishedAt: "2026-07-25T12:00:00Z" });
+  const match = matchArticleToGame(a, games);
+  assert.equal(match?.gameId, "ava-ame");
+});
 
-  it("descarta notícia sem relação (abaixo do threshold)", () => {
-    const a = baseArticle({ title: "Notícia genérica sobre tênis", teams: [], competition: undefined });
-    const match = matchArticleToGame(a, games);
-    expect(match).toBeUndefined();
-  });
+test("matcher descarta notícia sem relação", () => {
+  const a = baseArticle({ title: "Notícia genérica sobre tênis", teams: [], competition: undefined });
+  assert.equal(matchArticleToGame(a, games), undefined);
+});
 
-  it("agrupa artigos por jogo", () => {
-    const articles = [
-      baseArticle({ id: "a1", title: "Fluminense x Flamengo agita o Rio", teams: ["Fluminense", "Flamengo"] }),
-      baseArticle({ id: "a2", title: "Avaí confirma estreia", teams: ["Avaí"], competition: "Série B" }),
-      baseArticle({ id: "a3", title: "Notícia irrelevante", teams: [] }),
-    ];
-    const grouped = groupArticlesByGame(articles, games);
-    expect(grouped["flu-fla"]).toHaveLength(1);
-    expect(grouped["ava-ame"]).toHaveLength(1);
-    expect(grouped["irrelevante"]).toBeUndefined();
-  });
+test("groupArticlesByGame agrupa corretamente", () => {
+  const articles = [
+    baseArticle({ id: "a1", title: "Fluminense x Flamengo agita o Rio", teams: ["Fluminense", "Flamengo"] }),
+    baseArticle({ id: "a2", title: "Avaí confirma estreia", teams: ["Avaí"], competition: "Série B" }),
+    baseArticle({ id: "a3", title: "Notícia irrelevante", teams: [], competition: undefined }),
+  ];
+  const grouped = groupArticlesByGame(articles, games);
+  assert.equal(grouped["flu-fla"]?.length, 1);
+  assert.equal(grouped["ava-ame"]?.length, 1);
+});
 
-  it("scoreArticleForGame retorna razões", () => {
-    const a = baseArticle({ title: "Fluminense x Flamengo", teams: ["Fluminense", "Flamengo"] });
-    const s = scoreArticleForGame(a, games[0]);
-    expect(s.reasons.length).toBeGreaterThan(0);
-  });
+test("scoreArticleForGame retorna razões", () => {
+  const a = baseArticle({ title: "Fluminense x Flamengo", teams: ["Fluminense", "Flamengo"] });
+  const s = scoreArticleForGame(a, games[0]);
+  assert.ok(s.reasons.length > 0);
 });

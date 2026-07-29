@@ -1,13 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { test } from "node:test";
+import assert from "node:assert/strict";
 import { analyzeGameNews } from "../newsEngine";
 import type { MatchableGame, NewsArticle } from "../newsTypes";
 
 const game: MatchableGame = {
-  id: "flu-fla",
-  homeTeam: "Fluminense",
-  awayTeam: "Flamengo",
-  competition: "Brasileirão Série A",
-  date: "2026-07-25T19:00:00Z",
+  id: "flu-fla", homeTeam: "Fluminense", awayTeam: "Flamengo",
+  competition: "Brasileirão Série A", date: "2026-07-25T19:00:00Z",
 };
 
 const art = (over: Partial<NewsArticle>): NewsArticle => ({
@@ -17,39 +15,35 @@ const art = (over: Partial<NewsArticle>): NewsArticle => ({
   tags: [], confidence: 0.9, ...over,
 });
 
-describe("newsEngine.analyzeGameNews", () => {
-  it("retorna análise vazia sem artigos", () => {
-    const a = analyzeGameNews(game, []);
-    expect(a.totalNews).toBe(0);
-    expect(a.editorialImportance).toBe("baixa");
-    expect(a.alerts).toHaveLength(0);
-  });
+test("análise vazia sem artigos", () => {
+  const a = analyzeGameNews(game, []);
+  assert.equal(a.totalNews, 0);
+  assert.equal(a.editorialImportance, "baixa");
+  assert.equal(a.alerts.length, 0);
+});
 
-  it("classifica lesão como alerta de alta importância", () => {
-    const a = analyzeGameNews(game, [
-      art({ id: "1", title: "Pedro sofre lesão muscular", tags: ["lesao"] }),
-    ]);
-    expect(a.totalNews).toBe(1);
-    expect(a.editorialImportance).toBe("alta");
-    expect(a.alerts.length).toBe(1);
-    expect(a.insights[0].category).toBe("lesão");
-  });
+test("lesão gera alerta de alta importância", () => {
+  const a = analyzeGameNews(game, [art({ id: "1", title: "Pedro sofre lesão muscular", tags: ["lesao"] })]);
+  assert.equal(a.totalNews, 1);
+  assert.equal(a.editorialImportance, "alta");
+  assert.equal(a.alerts.length, 1);
+  assert.equal(a.insights[0].category, "lesão");
+});
 
-  it("consolida múltiplas categorias em tópicos sugeridos", () => {
-    const a = analyzeGameNews(game, [
-      art({ id: "1", title: "Provável escalação do Fluminense", tags: ["escalacao"] }),
-      art({ id: "2", title: "Clube anuncia contratação de reforço", tags: ["transferencia"] }),
-      art({ id: "3", title: "Rivalidade e clássico do Rio", tags: ["classico"] }),
-    ]);
-    expect(a.suggestedTopics.length).toBeGreaterThanOrEqual(3);
-    expect(a.editorialImportance).not.toBe("baixa");
-  });
+test("consolida tópicos sugeridos a partir de múltiplas categorias", () => {
+  const a = analyzeGameNews(game, [
+    art({ id: "1", title: "Provável escalação do Fluminense", tags: ["escalacao"] }),
+    art({ id: "2", title: "Clube anuncia contratação de reforço", tags: ["transferencia"] }),
+    art({ id: "3", title: "Rivalidade e clássico do Rio", tags: ["classico"] }),
+  ]);
+  assert.ok(a.suggestedTopics.length >= 3);
+  assert.notEqual(a.editorialImportance, "baixa");
+});
 
-  it("média de confidence é calculada", () => {
-    const a = analyzeGameNews(game, [
-      art({ id: "1", confidence: 1, title: "escalacao" }),
-      art({ id: "2", confidence: 0.5, title: "geral" }),
-    ]);
-    expect(a.confidence).toBeCloseTo(0.75, 5);
-  });
+test("média de confidence é calculada", () => {
+  const a = analyzeGameNews(game, [
+    art({ id: "1", confidence: 1 }),
+    art({ id: "2", confidence: 0.5 }),
+  ]);
+  assert.ok(Math.abs(a.confidence - 0.75) < 1e-6);
 });
