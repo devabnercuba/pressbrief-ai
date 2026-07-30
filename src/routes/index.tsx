@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Sparkles,
   ArrowUpRight,
@@ -76,6 +76,10 @@ function greeting() {
 
 function DashboardPage() {
   const profile = getUserProfile();
+  // Saudação depende do horário local: calculada apenas no cliente para
+  // evitar divergência de hidratação com o SSR.
+  const [greet, setGreet] = useState("");
+  useEffect(() => setGreet(greeting()), []);
   const today = new Date();
   const todayISO = toISO(today);
 
@@ -134,7 +138,7 @@ function DashboardPage() {
           {today.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
         </p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          {greeting()}, {profile.firstName}
+          {greet ? `${greet}, ` : ""}{profile.firstName}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
           Calendário inteligente de coberturas — clique em um dia para ver as partidas.

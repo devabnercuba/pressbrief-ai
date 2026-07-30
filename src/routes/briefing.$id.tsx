@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, FileText, Star, AlertTriangle, ListChecks, Check, LayoutGrid, Camera } from "lucide-react";
+import { ArrowLeft, FileText, Star, AlertTriangle, ListChecks, Check, LayoutGrid, Camera, Sparkles, Cpu } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AIBriefing } from "@/components/app/AIBriefing";
 import { Layout } from "@/components/app/Layout";
 import { Header } from "@/components/app/Header";
 import { Button } from "@/components/ui/button";
@@ -90,7 +92,22 @@ function BriefingPage() {
         }
       />
 
-      <div className="mt-6 space-y-5">
+      <Tabs defaultValue="ai" className="mt-6">
+        <TabsList>
+          <TabsTrigger value="ai">
+            <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Briefing Inteligente
+          </TabsTrigger>
+          <TabsTrigger value="tech">
+            <Cpu className="mr-1.5 h-3.5 w-3.5" /> Briefing Técnico
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="ai" className="mt-5">
+          <AIBriefing game={game} />
+        </TabsContent>
+
+        <TabsContent value="tech" className="mt-5">
+          <div className="space-y-5">
         {/* 1 — Resumo da partida */}
         <BriefingSection step={1} title="Resumo da partida" subtitle="Contexto e narrativa principal">
           <GameSummary game={game} />
@@ -206,7 +223,9 @@ function BriefingPage() {
             <ShotList shots={game.shotList} />
           </div>
         </BriefingSection>
-      </div>
+        </div>
+        </TabsContent>
+      </Tabs>
 
       <div className="mt-6 flex justify-end">
         <Button asChild variant="outline" size="sm">
