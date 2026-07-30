@@ -59,7 +59,7 @@ function extractJson(text: string): unknown {
   const start = cleaned.indexOf("{");
   const end = cleaned.lastIndexOf("}");
   if (start === -1 || end === -1 || end <= start) {
-    throw new Error("Resposta da IA não contém JSON válido.");
+    throw new Error(`Resposta da IA não contém JSON válido: ${text.slice(0, 200) || "(vazia)"}`);
   }
   return JSON.parse(cleaned.slice(start, end + 1));
 }
