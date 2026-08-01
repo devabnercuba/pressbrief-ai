@@ -10,8 +10,8 @@ import type { Game } from "@/types";
 /** Limite de dias por requisição imposto pela Football-Data API. */
 export const MAX_DAYS_PER_REQUEST = 10;
 
-/** Quantidade máxima de requisições simultâneas (evita rate limit). */
-export const MAX_CONCURRENCY = 4;
+/** Quantidade máxima de requisições simultâneas (evita rate limit 429). */
+export const MAX_CONCURRENCY = 2;
 
 export interface DateRange {
   dateFrom: string; // YYYY-MM-DD

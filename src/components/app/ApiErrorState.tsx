@@ -8,8 +8,8 @@ interface Props {
 }
 
 export function ApiErrorState({
-  title = "Não foi possível carregar os jogos",
-  message = "A API está indisponível ou sua chave atingiu o limite. Tente novamente em instantes.",
+  title = "Não foi possível atualizar os jogos agora",
+  message = "Tentaremos novamente automaticamente. Você pode continuar usando os dados já carregados.",
   onRetry,
 }: Props) {
   return (

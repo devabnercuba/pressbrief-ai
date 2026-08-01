@@ -1,5 +1,10 @@
 // Football-Data.org service — única camada autorizada a chamar a API.
 // Componentes/páginas devem consumir estes helpers e nunca invocar a API direto.
+//
+// Responsabilidades desta camada:
+// - cache com TTL de 10 minutos + deduplicação de requisições;
+// - filtro das competições suportadas (Brasil + continentais);
+// - fallback para os últimos dados válidos quando a API falha.
 import {
   fetchCompetitions,
   fetchMatchById,
@@ -12,6 +17,13 @@ import {
   type FDTeam,
 } from "@/lib/football-data.functions";
 import { loadCalendarRange, type DateRange } from "@/services/calendarLoader";
+import { appCache, type CachedResult } from "@/services/apiCache";
+import {
+  findSupportedCompetition,
+  isSupportedCompetition,
+} from "@/config/supportedCompetitions";
+import { monthRange } from "@/lib/calendar-utils";
+import { withTiming } from "@/lib/logger";
 import type { Game, Opportunity } from "@/types";
 
 export const FD_ID_PREFIX = "fd-";
@@ -47,6 +59,12 @@ export function mapMatchToGame(match: FDMatch): Game {
   const away = match.awayTeam?.name ?? "A confirmar";
   const stadium = match.venue ?? "Estádio a confirmar";
   const city = match.competition?.area?.name ?? "—";
+  const supported = findSupportedCompetition({
+    code: match.competition?.code,
+    id: match.competition?.id,
+    name: match.competition?.name,
+  });
+  const competitionName = supported?.label ?? match.competition?.name ?? "Competição";
 
   return {
     id: `${FD_ID_PREFIX}${match.id}`,
@@ -54,7 +72,7 @@ export function mapMatchToGame(match: FDMatch): Game {
     homeCrest: match.homeTeam?.crest || placeholderCrest(match.homeTeam?.tla ?? home),
     awayTeam: away,
     awayCrest: match.awayTeam?.crest || placeholderCrest(match.awayTeam?.tla ?? away),
-    competition: match.competition?.name ?? "Competição",
+    competition: competitionName,
     date,
     time,
     stadium,
@@ -68,7 +86,7 @@ export function mapMatchToGame(match: FDMatch): Game {
     priorityPlayersCount: 0,
     opportunity: "medium" as Opportunity,
     reasons: [],
-    summary: `${match.competition?.name ?? "Partida"} • ${statusLabel(match.status)}${
+    summary: `${competitionName} • ${statusLabel(match.status)}${
       match.matchday ? ` • Rodada ${match.matchday}` : ""
     }`,
     pautas: [],
@@ -79,6 +97,17 @@ export function mapMatchToGame(match: FDMatch): Game {
   };
 }
 
+/** Mantém apenas partidas das competições suportadas (Brasil + continentais). */
+export function filterSupportedMatches(matches: FDMatch[]): FDMatch[] {
+  return matches.filter((m) =>
+    isSupportedCompetition({
+      code: m.competition?.code,
+      id: m.competition?.id,
+      name: m.competition?.name,
+    }),
+  );
+}
+
 // Requisição simples (usada internamente pelo CalendarLoader). A API limita
 // cada chamada a 10 dias — períodos maiores devem passar por
 // `listMatchesForRange`.
@@ -87,46 +116,80 @@ export async function listMatches(params?: {
   dateTo?: string;
 }): Promise<Game[]> {
   const res = await fetchMatches({ data: params ?? {} });
-  return (res.matches ?? []).map(mapMatchToGame);
+  return filterSupportedMatches(res.matches ?? []).map(mapMatchToGame);
 }
 
 // Carrega qualquer período, de qualquer tamanho. O CalendarLoader divide em
-// blocos de no máximo 10 dias, faz as chamadas em paralelo, deduplica e ordena.
+// blocos de no máximo 10 dias, faz as chamadas em série limitada, deduplica e
+// ordena.
 export async function listMatchesForRange(range: DateRange): Promise<Game[]> {
   return loadCalendarRange(range, (chunk) => listMatches(chunk), {
     tolerateErrors: true,
   });
 }
 
-// Busca partidas cobrindo o mês atual + próximo mês. Base do Calendário
-// Inteligente; a arquitetura permite trocar por temporadas inteiras
-// futuramente sem impacto nas páginas.
-export async function listMatchesForCalendar(from: Date = new Date()): Promise<Game[]> {
-  const { currentAndNextMonthRange } = await import("@/lib/calendar-utils");
-  return listMatchesForRange(currentAndNextMonthRange(from));
+export type CalendarResult = CachedResult<Game[]>;
+
+/**
+ * Carrega **apenas um mês** (comportamento do Calendário Inteligente).
+ * Usa cache de 10 minutos, deduplica chamadas simultâneas e cai para o último
+ * resultado válido quando a API falha.
+ */
+export async function loadMonthGames(year: number, month: number): Promise<CalendarResult> {
+  const range = monthRange(year, month);
+  return withTiming(
+    `calendário ${range.dateFrom}→${range.dateTo}`,
+    () =>
+      appCache.fetch<Game[]>(
+        `calendar:${range.dateFrom}:${range.dateTo}`,
+        () => listMatchesForRange(range),
+        { scope: "calendário" },
+      ),
+    (res) => ({
+      items: res.data.length,
+      cache:
+        res.source === "fresh" ? ("miss" as const) : res.source === "cache" ? ("hit" as const) : ("stale" as const),
+    }),
+  );
 }
 
 export async function getMatchGameById(gameId: string): Promise<Game | undefined> {
   if (!gameId.startsWith(FD_ID_PREFIX)) return undefined;
   const raw = Number(gameId.slice(FD_ID_PREFIX.length));
   if (!Number.isFinite(raw)) return undefined;
-  const match = await fetchMatchById({ data: { id: raw } });
-  return match ? mapMatchToGame(match) : undefined;
+  const res = await appCache.fetch(
+    `match:${raw}`,
+    () => fetchMatchById({ data: { id: raw } }),
+    { scope: "partida" },
+  );
+  return res.data ? mapMatchToGame(res.data) : undefined;
 }
 
 export async function listCompetitions(): Promise<FDCompetition[]> {
-  const res = await fetchCompetitions();
-  return res.competitions ?? [];
+  const res = await appCache.fetch(
+    "competitions",
+    async () => (await fetchCompetitions()).competitions ?? [],
+    { scope: "competições" },
+  );
+  return res.data.filter((c) => isSupportedCompetition({ code: c.code, id: c.id, name: c.name }));
 }
 
 export async function listTeamsByCompetition(code: string): Promise<FDTeam[]> {
-  const res = await fetchTeamsByCompetition({ data: { code } });
-  return res.teams ?? [];
+  const res = await appCache.fetch(
+    `teams:${code}`,
+    async () => (await fetchTeamsByCompetition({ data: { code } })).teams ?? [],
+    { scope: "times" },
+  );
+  return res.data;
 }
 
 export async function getStandings(
   code: string,
 ): Promise<NonNullable<FDStandingsResponse["standings"]>> {
-  const res = await fetchStandings({ data: { code } });
-  return res.standings ?? [];
+  const res = await appCache.fetch(
+    `standings:${code}`,
+    async () => (await fetchStandings({ data: { code } })).standings ?? [],
+    { scope: "classificação" },
+  );
+  return res.data;
 }
