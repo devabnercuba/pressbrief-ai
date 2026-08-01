@@ -11,6 +11,7 @@ import {
   type FDStandingsResponse,
   type FDTeam,
 } from "@/lib/football-data.functions";
+import { loadCalendarRange, type DateRange } from "@/services/calendarLoader";
 import type { Game, Opportunity } from "@/types";
 
 export const FD_ID_PREFIX = "fd-";
@@ -78,6 +79,9 @@ export function mapMatchToGame(match: FDMatch): Game {
   };
 }
 
+// Requisição simples (usada internamente pelo CalendarLoader). A API limita
+// cada chamada a 10 dias — períodos maiores devem passar por
+// `listMatchesForRange`.
 export async function listMatches(params?: {
   dateFrom?: string;
   dateTo?: string;
@@ -86,13 +90,20 @@ export async function listMatches(params?: {
   return (res.matches ?? []).map(mapMatchToGame);
 }
 
+// Carrega qualquer período, de qualquer tamanho. O CalendarLoader divide em
+// blocos de no máximo 10 dias, faz as chamadas em paralelo, deduplica e ordena.
+export async function listMatchesForRange(range: DateRange): Promise<Game[]> {
+  return loadCalendarRange(range, (chunk) => listMatches(chunk), {
+    tolerateErrors: true,
+  });
+}
+
 // Busca partidas cobrindo o mês atual + próximo mês. Base do Calendário
 // Inteligente; a arquitetura permite trocar por temporadas inteiras
 // futuramente sem impacto nas páginas.
 export async function listMatchesForCalendar(from: Date = new Date()): Promise<Game[]> {
   const { currentAndNextMonthRange } = await import("@/lib/calendar-utils");
-  const range = currentAndNextMonthRange(from);
-  return listMatches(range);
+  return listMatchesForRange(currentAndNextMonthRange(from));
 }
 
 export async function getMatchGameById(gameId: string): Promise<Game | undefined> {
