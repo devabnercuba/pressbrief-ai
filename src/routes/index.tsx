@@ -16,6 +16,8 @@ import {
 import { Layout } from "@/components/app/Layout";
 import { GameCardSkeleton } from "@/components/app/GameCardSkeleton";
 import { ApiErrorState } from "@/components/app/ApiErrorState";
+import { DataStatus } from "@/components/app/DataStatus";
+import { LoadingState } from "@/components/app/LoadingState";
 import { MonthCalendar } from "@/components/app/MonthCalendar";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +30,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { getUserProfile } from "@/services/gameService";
-import { listMatchesForCalendar } from "@/services/footballDataService";
+import { loadMonthGames } from "@/services/footballDataService";
 import {
   analyzeCoverageFromGame,
   analyzeEditorialFromGame,
@@ -38,6 +40,7 @@ import {
 import { useGamesStore } from "@/lib/games-store";
 import { useCredentialsStore } from "@/lib/credentials-store";
 import { approvedRequests, pendingRequests } from "@/lib/credentials";
+import type { Game } from "@/types";
 import {
   DEFAULT_FILTERS,
   filterRanked,
@@ -88,14 +91,20 @@ function DashboardPage() {
   const [selectedISO, setSelectedISO] = useState(todayISO);
   const [filters, setFilters] = useState<CalendarFilters>(DEFAULT_FILTERS);
 
+  // Carrega apenas o mês visível. Trocar de mês dispara uma nova consulta —
+  // nunca vários meses de uma vez.
   const matchesQuery = useQuery({
     queryKey: ["fd-calendar", year, month],
-    queryFn: () => listMatchesForCalendar(new Date(year, month, 1)),
-    staleTime: 60_000,
+    queryFn: () => loadMonthGames(year, month),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
     retry: 1,
+    placeholderData: (prev) => prev,
   });
 
-  const games = matchesQuery.data ?? [];
+  const games: Game[] = matchesQuery.data?.data ?? [];
+  const dataSource = matchesQuery.data?.source ?? "fresh";
+  const updatedAt = matchesQuery.data?.updatedAt;
 
   const ranked: RankedGame[] = useMemo(
     () =>
@@ -143,6 +152,11 @@ function DashboardPage() {
         <p className="mt-1.5 text-sm text-muted-foreground">
           Calendário inteligente de coberturas — clique em um dia para ver as partidas.
         </p>
+        <DataStatus
+          className="mt-3"
+          source={matchesQuery.isError ? "stale" : dataSource}
+          updatedAt={updatedAt}
+        />
       </header>
 
       <DashboardKPIs monthGames={ranked.length} />
@@ -161,6 +175,10 @@ function DashboardPage() {
               setMonth(m);
             }}
           />
+
+          {matchesQuery.isFetching && <LoadingState message="Carregando calendário..." />}
+
+
 
           <div className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -244,16 +262,17 @@ function DashboardPage() {
             </div>
 
             <div className="mt-4 space-y-3">
-              {matchesQuery.isLoading &&
+              {matchesQuery.isPending &&
                 Array.from({ length: 3 }).map((_, i) => <GameCardSkeleton key={i} />)}
-              {matchesQuery.isError && <ApiErrorState onRetry={() => matchesQuery.refetch()} />}
-              {matchesQuery.isSuccess && dayGames.length === 0 && (
+              {matchesQuery.isError && games.length === 0 && (
+                <ApiErrorState onRetry={() => matchesQuery.refetch()} />
+              )}
+              {!matchesQuery.isPending && dayGames.length === 0 && !matchesQuery.isError && (
                 <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
                   Nenhuma partida neste dia com os filtros atuais.
                 </div>
               )}
-              {matchesQuery.isSuccess &&
-                dayGames.map((r) => <CalendarGameCard key={r.game.id} ranked={r} />)}
+              {dayGames.map((r) => <CalendarGameCard key={r.game.id} ranked={r} />)}
             </div>
           </section>
 

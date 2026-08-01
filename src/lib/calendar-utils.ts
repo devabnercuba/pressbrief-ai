@@ -93,11 +93,21 @@ export function toISO(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-// Retorna { dateFrom, dateTo } cobrindo mês atual + próximo (formato YYYY-MM-DD).
-export function currentAndNextMonthRange(from: Date = new Date()): {
+export interface MonthRange {
   dateFrom: string;
   dateTo: string;
-} {
+}
+
+// Retorna { dateFrom, dateTo } cobrindo apenas um mês (formato YYYY-MM-DD).
+// O Calendário Inteligente carrega um mês por vez.
+export function monthRange(year: number, month: number): MonthRange {
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+  return { dateFrom: toISO(start), dateTo: toISO(end) };
+}
+
+// Retorna { dateFrom, dateTo } cobrindo mês atual + próximo (formato YYYY-MM-DD).
+export function currentAndNextMonthRange(from: Date = new Date()): MonthRange {
   const start = new Date(from.getFullYear(), from.getMonth(), 1);
   const end = new Date(from.getFullYear(), from.getMonth() + 2, 0); // último dia do próximo mês
   return { dateFrom: toISO(start), dateTo: toISO(end) };
