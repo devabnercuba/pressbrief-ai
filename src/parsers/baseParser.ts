@@ -43,7 +43,7 @@ export function hostOf(url?: string): string {
 
 /** "12/04/2026 16:00 Time A x Time B — Estádio" → RawGameInput */
 export const MATCH_LINE =
-  /(\d{1,2}[/.-]\d{1,2}(?:[/.-]\d{2,4})?|\d{4}-\d{2}-\d{2})\s*(?:[-—|,]\s*)?(\d{1,2}\s*[:h]\s*\d{0,2})?\s*[-—|,]?\s*([^\n|;]{3,60}?)\s+(?:x|vs\.?|×)\s+([^\n|;–—]{3,60}?)(?:\s*[-—|]\s*([^\n|;]{3,80}))?(?=$|\n|\||;)/gi;
+  /(\d{1,2}[/.-]\d{1,2}(?:[/.-]\d{2,4})?|\d{4}-\d{2}-\d{2})\s*(?:[-—|,]\s*)?(\d{1,2}\s*[:h]\s*\d{0,2})?\s*[-—|,]?\s*([^\n|;]{3,60}?)\s+(?:x|vs\.?|×)\s+([^\n|;–—]{3,60}?)(?:\s*[-—|]\s*([^\n|;]{3,80}?))?(?=\s*(?:\d{1,2}[/.-]\d{1,2}|\d{4}-\d{2}-\d{2})|$|\n|\||;)/gi;
 
 export function parseMatchLines(text: string, competition?: string): RawGameInput[] {
   const games: RawGameInput[] = [];
