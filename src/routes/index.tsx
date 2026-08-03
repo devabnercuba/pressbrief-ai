@@ -30,7 +30,10 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { getUserProfile } from "@/services/gameService";
-import { loadMonthGames } from "@/services/footballDataService";
+import { dataSourceManager } from "@/dataSources/dataSourceManager";
+import { useDataSources } from "@/lib/data-sources-store";
+import { DataSourcesPanel } from "@/components/app/DataSourcesPanel";
+
 import {
   analyzeCoverageFromGame,
   analyzeEditorialFromGame,
