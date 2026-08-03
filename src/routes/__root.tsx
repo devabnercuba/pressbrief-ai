@@ -13,6 +13,9 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { GamesProvider } from "@/lib/games-store";
 import { CredentialsProvider } from "@/lib/credentials-store";
+import { DataSourcesProvider } from "@/lib/data-sources-store";
+import { Toaster } from "@/components/ui/sonner";
+
 
 function NotFoundComponent() {
   return (
@@ -131,12 +134,16 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <GamesProvider>
-        <CredentialsProvider>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </CredentialsProvider>
-      </GamesProvider>
+      <DataSourcesProvider>
+        <GamesProvider>
+          <CredentialsProvider>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+            <Toaster />
+          </CredentialsProvider>
+        </GamesProvider>
+      </DataSourcesProvider>
     </QueryClientProvider>
+
   );
 }

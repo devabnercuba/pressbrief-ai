@@ -30,7 +30,10 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { getUserProfile } from "@/services/gameService";
-import { loadMonthGames } from "@/services/footballDataService";
+import { dataSourceManager } from "@/dataSources/dataSourceManager";
+import { useDataSources } from "@/lib/data-sources-store";
+import { DataSourcesPanel } from "@/components/app/DataSourcesPanel";
+
 import {
   analyzeCoverageFromGame,
   analyzeEditorialFromGame,
@@ -91,20 +94,33 @@ function DashboardPage() {
   const [selectedISO, setSelectedISO] = useState(todayISO);
   const [filters, setFilters] = useState<CalendarFilters>(DEFAULT_FILTERS);
 
-  // Carrega apenas o mês visível. Trocar de mês dispara uma nova consulta —
-  // nunca vários meses de uma vez.
+  // Todos os jogos entram pelo Universal Data Source (UDS): o dashboard nunca
+  // fala com uma API diretamente. Carrega apenas o mês visível.
+  const { sources } = useDataSources();
+  const sourcesKey = sources
+    .filter((s) => s.enabled)
+    .map((s) => `${s.id}:${s.type}:${s.url ?? ""}`)
+    .join("|");
+
   const matchesQuery = useQuery({
-    queryKey: ["fd-calendar", year, month],
-    queryFn: () => loadMonthGames(year, month),
+    queryKey: ["uds-calendar", year, month, sourcesKey],
+    queryFn: () => dataSourceManager.loadMonth(sources, year, month),
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,
     placeholderData: (prev) => prev,
   });
 
-  const games: Game[] = matchesQuery.data?.data ?? [];
+  const games: Game[] = matchesQuery.data?.games ?? [];
   const dataSource = matchesQuery.data?.source ?? "fresh";
   const updatedAt = matchesQuery.data?.updatedAt;
+  const sourceStats = matchesQuery.data?.stats ?? [];
+
+  async function refreshSources() {
+    dataSourceManager.clearCache();
+    await matchesQuery.refetch();
+  }
+
 
   const ranked: RankedGame[] = useMemo(
     () =>
@@ -160,6 +176,15 @@ function DashboardPage() {
       </header>
 
       <DashboardKPIs monthGames={ranked.length} />
+
+      <div className="mt-6">
+        <DataSourcesPanel
+          stats={sourceStats}
+          onRefresh={refreshSources}
+          isRefreshing={matchesQuery.isFetching}
+        />
+      </div>
+
 
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
