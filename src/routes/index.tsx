@@ -177,6 +177,15 @@ function DashboardPage() {
 
       <DashboardKPIs monthGames={ranked.length} />
 
+      <div className="mt-6">
+        <DataSourcesPanel
+          stats={sourceStats}
+          onRefresh={refreshSources}
+          isRefreshing={matchesQuery.isFetching}
+        />
+      </div>
+
+
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
         <div className="space-y-4">
