@@ -165,27 +165,24 @@ export function normalizeGames(raws: RawGameInput[], source: string): Normalized
   );
 }
 
-const placeholderCrest = (label: string) =>
-  `data:image/svg+xml;utf8,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#27272a"/><text x="50%" y="55%" text-anchor="middle" font-family="Inter,Arial" font-size="18" font-weight="700" fill="#a1a1aa">${label
-      .slice(0, 3)
-      .toUpperCase()}</text></svg>`,
-  )}`;
-
 /** Converte o modelo universal para o `Game` consumido pelos Engines/UI. */
 export function toAppGame(game: NormalizedGame, crests?: { home?: string; away?: string }): Game {
+  const home = resolveTeam(game.homeTeam);
+  const away = resolveTeam(game.awayTeam);
+  const round = game.round && game.round !== UNKNOWN ? ` • ${game.round}` : "";
+
   return {
     id: game.id,
-    homeTeam: game.homeTeam,
-    homeCrest: crests?.home || placeholderCrest(game.homeTeam),
-    awayTeam: game.awayTeam,
-    awayCrest: crests?.away || placeholderCrest(game.awayTeam),
+    homeTeam: home.name,
+    homeCrest: crests?.home || home.crest || defaultCrest(game.homeTeam),
+    awayTeam: away.name,
+    awayCrest: crests?.away || away.crest || defaultCrest(game.awayTeam),
     competition: game.competition,
     date: game.date,
-    time: game.time || "00:00",
-    stadium: game.stadium,
-    city: game.city,
-    state: game.state,
+    time: game.time || UNKNOWN_TIME,
+    stadium: game.stadium || UNKNOWN,
+    city: game.city || (home.known ? home.city : UNKNOWN),
+    state: game.state || (home.known ? home.state : UNKNOWN),
     coverageScore: 0,
     editorialScore: 0,
     distanceKm: 0,
@@ -194,7 +191,8 @@ export function toAppGame(game: NormalizedGame, crests?: { home?: string; away?:
     priorityPlayersCount: 0,
     opportunity: "medium" as Opportunity,
     reasons: [],
-    summary: `${game.competition} • ${game.status}${game.round ? ` • ${game.round}` : ""}`,
+    summary: `${game.competition} • ${game.status}${round}`,
+
     pautas: [],
     priorityPlayers: [],
     mustShoot: [],
