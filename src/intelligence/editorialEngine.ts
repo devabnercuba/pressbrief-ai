@@ -74,7 +74,15 @@ export function analyzeEditorial(input: EditorialInput): EditorialAnalysis {
     });
 
   const factorScoreTotal = breakdown.reduce((acc, f) => acc + f.contribution, 0);
-  const base = safe.baseRelevance;
+  const base =
+    safe.baseRelevance ??
+    (safe.competition || safe.homeTeam || safe.awayTeam
+      ? baseRelevanceFor({
+          competition: safe.competition,
+          homeTeam: safe.homeTeam,
+          awayTeam: safe.awayTeam,
+        })
+      : undefined);
   const editorialScore = clamp(
     Math.round(base != null ? factorScoreTotal * 0.6 + base * 0.4 : factorScoreTotal),
   );
