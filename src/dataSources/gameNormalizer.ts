@@ -3,6 +3,12 @@
 // consumido pelos Engines/UI.
 import type { NormalizedGame, RawGameInput } from "./dataSourceTypes";
 import type { Game, Opportunity } from "@/types";
+import { resolveTeam, defaultCrest } from "@/data/teamDatabase";
+
+/** Valor exibido quando a fonte não informa o dado. */
+export const UNKNOWN = "Não informado";
+export const UNKNOWN_TIME = "A definir";
+
 
 const MONTHS: Record<string, string> = {
   jan: "01",
