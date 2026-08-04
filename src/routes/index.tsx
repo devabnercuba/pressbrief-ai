@@ -14,6 +14,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { Layout } from "@/components/app/Layout";
+import { displayTime, displayVenue } from "@/lib/display";
 import { GameCardSkeleton } from "@/components/app/GameCardSkeleton";
 import { ApiErrorState } from "@/components/app/ApiErrorState";
 import { DataStatus } from "@/components/app/DataStatus";
@@ -396,8 +397,8 @@ function CalendarGameCard({ ranked }: { ranked: RankedGame }) {
             </h3>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1"><Trophy className="h-3.5 w-3.5" />{game.competition}</span>
-              <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{game.stadium} · {game.city}</span>
-              <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{game.time}</span>
+              <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{displayVenue(game.stadium, game.city, game.state)}</span>
+              <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{displayTime(game.time)}</span>
               {game.distanceKm > 0 && (
                 <span className="inline-flex items-center gap-1"><Navigation className="h-3.5 w-3.5" />{game.distanceKm} km</span>
               )}

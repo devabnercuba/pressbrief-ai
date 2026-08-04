@@ -14,6 +14,8 @@ import {
   ratingFromScore,
   type EditorialFactorKey,
 } from "./editorialRules";
+import { baseRelevanceFor, deriveEditorialFactors } from "./editorialContext";
+import type { GameNewsAnalysis } from "@/news/newsTypes";
 import type {
   EditorialAnalysis,
   EditorialFactorBreakdown,
@@ -71,7 +73,19 @@ export function analyzeEditorial(input: EditorialInput): EditorialAnalysis {
       };
     });
 
-  const editorialScore = clamp(Math.round(breakdown.reduce((acc, f) => acc + f.contribution, 0)));
+  const factorScoreTotal = breakdown.reduce((acc, f) => acc + f.contribution, 0);
+  const base =
+    safe.baseRelevance ??
+    (safe.competition || safe.homeTeam || safe.awayTeam
+      ? baseRelevanceFor({
+          competition: safe.competition,
+          homeTeam: safe.homeTeam,
+          awayTeam: safe.awayTeam,
+        })
+      : undefined);
+  const editorialScore = clamp(
+    Math.round(base != null ? factorScoreTotal * 0.3 + base * 0.7 : factorScoreTotal),
+  );
   const rating = ratingFromScore(editorialScore);
 
   const positiveFactors: string[] = [];
@@ -129,24 +143,27 @@ export function analyzeEditorialFromGame(game: {
   competition?: string;
   homeTeam?: string;
   awayTeam?: string;
+  round?: string;
   reasons?: string[];
   summary?: string;
+  news?: GameNewsAnalysis;
 }): EditorialAnalysis {
-  const haystack = [game.summary ?? "", ...(game.reasons ?? [])].join(" \n ");
+  const context = {
+    competition: game.competition,
+    homeTeam: game.homeTeam,
+    awayTeam: game.awayTeam,
+    round: game.round,
+    summary: game.summary,
+    reasons: game.reasons,
+    news: game.news,
+  };
+  const factors = deriveEditorialFactors(context);
 
   return analyzeEditorial({
     competition: game.competition,
     homeTeam: game.homeTeam,
     awayTeam: game.awayTeam,
-    titleRace: inferFromText(haystack, "titleRace"),
-    relegationBattle: inferFromText(haystack, "relegationBattle"),
-    farewell: inferFromText(haystack, "farewell"),
-    derby: inferFromText(haystack, "derby") || isKnownDerby(game.homeTeam, game.awayTeam),
-    record: inferFromText(haystack, "record"),
-    debut: inferFromText(haystack, "debut"),
-    injuryReturn: inferFromText(haystack, "injuryReturn"),
-    coachPressure: inferFromText(haystack, "coachPressure"),
-    playerInForm: inferFromText(haystack, "playerInForm"),
-    clubCrisis: inferFromText(haystack, "clubCrisis"),
+    baseRelevance: baseRelevanceFor(context),
+    ...factors,
   });
 }

@@ -3,6 +3,12 @@
 // consumido pelos Engines/UI.
 import type { NormalizedGame, RawGameInput } from "./dataSourceTypes";
 import type { Game, Opportunity } from "@/types";
+import { resolveTeam, defaultCrest } from "@/data/teamDatabase";
+
+/** Valor exibido quando a fonte não informa o dado. */
+export const UNKNOWN = "Não informado";
+export const UNKNOWN_TIME = "A definir";
+
 
 const MONTHS: Record<string, string> = {
   jan: "01",
@@ -104,26 +110,37 @@ export function normalizeGame(raw: RawGameInput, source: string): NormalizedGame
       })
     : normalizeTime(raw.time);
 
-  const homeTeam = normalizeText(raw.homeTeam, "A confirmar");
-  const awayTeam = normalizeText(raw.awayTeam, "A confirmar");
+  const rawHome = normalizeText(raw.homeTeam, "A confirmar");
+  const rawAway = normalizeText(raw.awayTeam, "A confirmar");
+
+  // Team Database — enriquecimento automático (nome oficial curto, UF, cidade).
+  const home = rawHome === "A confirmar" ? undefined : resolveTeam(rawHome);
+  const away = rawAway === "A confirmar" ? undefined : resolveTeam(rawAway);
+
+  const homeTeam = home?.name ?? rawHome;
+  const awayTeam = away?.name ?? rawAway;
+
+  const city = normalizeText(raw.city) || (home?.known ? home.city : "") || UNKNOWN;
+  const state = normalizeText(raw.state) || (home?.known ? home.state : "") || UNKNOWN;
 
   return {
     id: buildGameId({ source, date, homeTeam, awayTeam, id: raw.id }),
-    competition: normalizeText(raw.competition, "Competição"),
-    season: normalizeText(raw.season, date ? date.slice(0, 4) : ""),
-    round: normalizeText(raw.round),
+    competition: normalizeText(raw.competition, UNKNOWN),
+    season: normalizeText(raw.season, date ? date.slice(0, 4) : UNKNOWN),
+    round: normalizeText(raw.round, UNKNOWN),
     date,
-    time,
+    time: time || UNKNOWN_TIME,
     homeTeam,
     awayTeam,
-    stadium: normalizeText(raw.stadium, "Estádio a confirmar"),
-    city: normalizeText(raw.city, "—"),
-    state: normalizeText(raw.state, "—"),
+    stadium: normalizeText(raw.stadium, UNKNOWN),
+    city,
+    state,
     country: normalizeText(raw.country, "Brasil"),
     status: normalizeText(raw.status, "Agendado"),
     source,
   };
 }
+
 
 /** Um jogo é válido quando possui data e os dois times. */
 export function isValidGame(game: NormalizedGame): boolean {
@@ -148,27 +165,24 @@ export function normalizeGames(raws: RawGameInput[], source: string): Normalized
   );
 }
 
-const placeholderCrest = (label: string) =>
-  `data:image/svg+xml;utf8,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#27272a"/><text x="50%" y="55%" text-anchor="middle" font-family="Inter,Arial" font-size="18" font-weight="700" fill="#a1a1aa">${label
-      .slice(0, 3)
-      .toUpperCase()}</text></svg>`,
-  )}`;
-
 /** Converte o modelo universal para o `Game` consumido pelos Engines/UI. */
 export function toAppGame(game: NormalizedGame, crests?: { home?: string; away?: string }): Game {
+  const home = resolveTeam(game.homeTeam);
+  const away = resolveTeam(game.awayTeam);
+  const round = game.round && game.round !== UNKNOWN ? ` • ${game.round}` : "";
+
   return {
     id: game.id,
-    homeTeam: game.homeTeam,
-    homeCrest: crests?.home || placeholderCrest(game.homeTeam),
-    awayTeam: game.awayTeam,
-    awayCrest: crests?.away || placeholderCrest(game.awayTeam),
+    homeTeam: home.name,
+    homeCrest: crests?.home || home.crest || defaultCrest(game.homeTeam),
+    awayTeam: away.name,
+    awayCrest: crests?.away || away.crest || defaultCrest(game.awayTeam),
     competition: game.competition,
     date: game.date,
-    time: game.time || "00:00",
-    stadium: game.stadium,
-    city: game.city,
-    state: game.state,
+    time: game.time || UNKNOWN_TIME,
+    stadium: game.stadium || UNKNOWN,
+    city: game.city || (home.known ? home.city : UNKNOWN),
+    state: game.state || (home.known ? home.state : UNKNOWN),
     coverageScore: 0,
     editorialScore: 0,
     distanceKm: 0,
@@ -177,7 +191,8 @@ export function toAppGame(game: NormalizedGame, crests?: { home?: string; away?:
     priorityPlayersCount: 0,
     opportunity: "medium" as Opportunity,
     reasons: [],
-    summary: `${game.competition} • ${game.status}${game.round ? ` • ${game.round}` : ""}`,
+    summary: `${game.competition} • ${game.status}${round}`,
+
     pautas: [],
     priorityPlayers: [],
     mustShoot: [],
