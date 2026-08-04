@@ -16,6 +16,10 @@ export interface CoverageAnalysis {
   positives: string[];
   attention: string[];
   breakdown: CoverageFactorBreakdown[];
+  /** Receita estimada da cobertura (BRL). */
+  estimatedRevenueBRL?: number;
+  /** Custo estimado de deslocamento (BRL). */
+  estimatedCostBRL?: number;
 }
 
 // Entrada mínima esperada pelo engine. É intencionalmente desacoplada
@@ -25,13 +29,17 @@ export interface CoverageInput {
   competition?: string;
   homeTeam?: string;
   awayTeam?: string;
+  state?: string;
   distanceKm?: number;
   travelCostBRL?: number;
+  expectedRevenueBRL?: number;
+  derby?: boolean;
   personalInterest?: number; // 0..100
   salesPotential?: number;   // 0..100
   historyScore?: number;     // 0..100
   editorialScore?: number;   // 0..100 (fallback p/ salesPotential)
 }
+
 
 // ===== Editorial Engine =====
 
