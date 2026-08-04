@@ -110,26 +110,37 @@ export function normalizeGame(raw: RawGameInput, source: string): NormalizedGame
       })
     : normalizeTime(raw.time);
 
-  const homeTeam = normalizeText(raw.homeTeam, "A confirmar");
-  const awayTeam = normalizeText(raw.awayTeam, "A confirmar");
+  const rawHome = normalizeText(raw.homeTeam, "A confirmar");
+  const rawAway = normalizeText(raw.awayTeam, "A confirmar");
+
+  // Team Database — enriquecimento automático (nome oficial curto, UF, cidade).
+  const home = rawHome === "A confirmar" ? undefined : resolveTeam(rawHome);
+  const away = rawAway === "A confirmar" ? undefined : resolveTeam(rawAway);
+
+  const homeTeam = home?.name ?? rawHome;
+  const awayTeam = away?.name ?? rawAway;
+
+  const city = normalizeText(raw.city) || (home?.known ? home.city : "") || UNKNOWN;
+  const state = normalizeText(raw.state) || (home?.known ? home.state : "") || UNKNOWN;
 
   return {
     id: buildGameId({ source, date, homeTeam, awayTeam, id: raw.id }),
-    competition: normalizeText(raw.competition, "Competição"),
-    season: normalizeText(raw.season, date ? date.slice(0, 4) : ""),
-    round: normalizeText(raw.round),
+    competition: normalizeText(raw.competition, UNKNOWN),
+    season: normalizeText(raw.season, date ? date.slice(0, 4) : UNKNOWN),
+    round: normalizeText(raw.round, UNKNOWN),
     date,
-    time,
+    time: time || UNKNOWN_TIME,
     homeTeam,
     awayTeam,
-    stadium: normalizeText(raw.stadium, "Estádio a confirmar"),
-    city: normalizeText(raw.city, "—"),
-    state: normalizeText(raw.state, "—"),
+    stadium: normalizeText(raw.stadium, UNKNOWN),
+    city,
+    state,
     country: normalizeText(raw.country, "Brasil"),
     status: normalizeText(raw.status, "Agendado"),
     source,
   };
 }
+
 
 /** Um jogo é válido quando possui data e os dois times. */
 export function isValidGame(game: NormalizedGame): boolean {
