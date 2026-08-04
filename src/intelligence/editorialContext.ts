@@ -54,10 +54,11 @@ export function roundNumber(round?: string): number | undefined {
  * ou clubes conhecidos.
  */
 export function baseRelevanceFor(input: EditorialContextInput): number {
-  const comp = competitionRelevance(input.competition);
   const home = clubRelevance(input.homeTeam);
   const away = clubRelevance(input.awayTeam);
   const clubs = (home + away) / 2;
+  // Sem competição informada, a relevância vem dos clubes envolvidos.
+  const comp = input.competition ? competitionRelevance(input.competition) : Math.max(55, clubs);
 
   let base = comp * 0.5 + clubs * 0.4;
 
