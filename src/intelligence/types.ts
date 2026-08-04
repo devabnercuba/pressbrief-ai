@@ -66,6 +66,8 @@ export interface EditorialAnalysis {
 // (presente/ausente) ou number (0..100 — intensidade).
 export interface EditorialInput {
   competition?: string;
+  /** Relevância editorial de base (0..100), derivada do contexto. */
+  baseRelevance?: number;
   homeTeam?: string;
   awayTeam?: string;
   titleRace?: boolean | number;
