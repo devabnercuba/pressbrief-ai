@@ -6,6 +6,7 @@ import { CoverageScore } from "./CoverageScore";
 import { EditorialScore } from "./EditorialScore";
 import { useGamesStore } from "@/lib/games-store";
 import type { Game } from "@/types";
+import { displayTime, displayVenue, displayDistance } from "@/lib/display";
 
 
 const weatherIcon = { sun: Sun, cloud: Cloud, rain: CloudRain, night: Moon } as const;
@@ -46,9 +47,9 @@ export function GameCard({ game }: { game: Game }) {
 
       <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
         <MetaItem icon={Calendar} label={formatDate(game.date)} />
-        <MetaItem icon={Clock} label={game.time} />
-        <MetaItem icon={MapPin} label={`${game.stadium}, ${game.city}`} />
-        <MetaItem icon={Navigation} label={`${game.distanceKm} km`} />
+        <MetaItem icon={Clock} label={displayTime(game.time)} />
+        <MetaItem icon={MapPin} label={displayVenue(game.stadium, game.city, game.state)} />
+        <MetaItem icon={Navigation} label={displayDistance(game.distanceKm) ?? "Distância a calcular"} />
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
