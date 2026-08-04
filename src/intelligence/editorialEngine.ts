@@ -84,7 +84,7 @@ export function analyzeEditorial(input: EditorialInput): EditorialAnalysis {
         })
       : undefined);
   const editorialScore = clamp(
-    Math.round(base != null ? factorScoreTotal * 0.6 + base * 0.4 : factorScoreTotal),
+    Math.round(base != null ? factorScoreTotal * 0.45 + base * 0.55 : factorScoreTotal),
   );
   const rating = ratingFromScore(editorialScore);
 
